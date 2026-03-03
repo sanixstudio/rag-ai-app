@@ -167,7 +167,7 @@ export async function listDocuments(): Promise<DocumentListItem[]> {
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { embeddings: true } } },
   });
-  return docs.map((d) => ({
+  return docs.map((d: { id: string; title: string; tags: string[]; createdAt: Date; updatedAt: Date; _count: { embeddings: number } }) => ({
     id: d.id,
     title: d.title,
     tags: d.tags ?? [],
