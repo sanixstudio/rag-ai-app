@@ -18,28 +18,11 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import OpenAI from "openai";
 import { nanoid } from "nanoid";
+import { chunkText } from "../src/lib/chunking";
 
 const EMBEDDING_MODEL = "text-embedding-3-small";
-const EMBEDDING_DIMENSION = 1536;
-const CHUNK_SIZE = 800;
-const CHUNK_OVERLAP = 100;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-function chunkText(text: string): string[] {
-  const chunks: string[] = [];
-  let start = 0;
-  while (start < text.length) {
-    let end = Math.min(start + CHUNK_SIZE, text.length);
-    if (end < text.length) {
-      const lastSpace = text.lastIndexOf(" ", end);
-      if (lastSpace > start) end = lastSpace;
-    }
-    chunks.push(text.slice(start, end).trim());
-    start = end - (end < text.length ? CHUNK_OVERLAP : 0);
-  }
-  return chunks.filter(Boolean);
-}
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
   const response = await openai.embeddings.create({

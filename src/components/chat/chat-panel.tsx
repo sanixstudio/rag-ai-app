@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { sendMessage } from "@/actions/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,12 +38,16 @@ export function ChatPanel({
   const messages: ChatMessage[] = initialMessages ?? [];
 
   useEffect(() => {
-    if (!state?.success) return;
-    if (state.sessionId && !initialSessionId) {
-      router.replace(`/chat/${state.sessionId}`);
+    if (state?.success) {
+      if (state.sessionId && !initialSessionId) {
+        router.replace(`/chat/${state.sessionId}`);
+      }
+      router.refresh();
     }
-    router.refresh();
-  }, [state?.success, state?.sessionId, initialSessionId, router]);
+    if (state?.success === false && state?.error?.content?.[0]) {
+      toast.error(state.error.content[0]);
+    }
+  }, [state?.success, state?.sessionId, state?.error, initialSessionId, router]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,8 +89,9 @@ export function ChatPanel({
           ))}
           {isPending && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-lg bg-muted px-4 py-2.5">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <div className="max-w-[85%] rounded-lg bg-muted px-4 py-2.5 flex items-center gap-2">
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Thinking…</span>
               </div>
             </div>
           )}

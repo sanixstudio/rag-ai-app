@@ -36,6 +36,9 @@ export default async function HomePage() {
             <span className="sm:hidden">RAG Assistant</span>
           </Link>
           <nav className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="shrink-0">
+              <Link href="/documents">Knowledge base</Link>
+            </Button>
             <ThemeToggle />
             {userId ? (
               <Button asChild size="sm" className="shrink-0">

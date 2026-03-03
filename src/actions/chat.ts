@@ -29,10 +29,14 @@ export async function sendMessage(formData: FormData) {
   let sessionId = existingSessionId;
   let userId: string | null = null;
 
-  const { userId: clerkId } = await auth();
-  if (clerkId) {
-    const user = await getOrCreateUserByClerk(clerkId);
-    userId = user?.id ?? null;
+  try {
+    const { userId: clerkId } = await auth();
+    if (clerkId) {
+      const user = await getOrCreateUserByClerk(clerkId);
+      userId = user?.id ?? null;
+    }
+  } catch {
+    // Auth unavailable (e.g. Clerk not configured)
   }
 
   try {

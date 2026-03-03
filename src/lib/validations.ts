@@ -5,7 +5,10 @@ export const sendMessageSchema = z.object({
     .string()
     .min(1, "Message cannot be empty")
     .max(4000, "Message too long"),
-  sessionId: z.string().cuid().optional(),
+  sessionId: z.preprocess(
+    (val) => (val === "" || val == null ? undefined : val),
+    z.cuid().optional()
+  ),
 });
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
