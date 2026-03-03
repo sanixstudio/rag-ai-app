@@ -18,7 +18,7 @@ export async function generateRagResponse(
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set");
   }
-  const { context } = await retrieveContext(userMessage, options.topK ?? 5);
+  const { context } = await retrieveContext(userMessage, options.topK ?? 10);
   const systemContent = context
     ? `${SYSTEM_PROMPT}\n\n## Context from knowledge base\n${context}`
     : `${SYSTEM_PROMPT}\n\n(No relevant context was found in the knowledge base for this query.)`;

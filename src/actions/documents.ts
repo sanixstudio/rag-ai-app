@@ -1,6 +1,6 @@
 "use server";
 
-import { PDFParse } from "pdf-parse";
+import { getDocumentProxy, extractText as unpdfExtractText } from "unpdf";
 import { nanoid } from "nanoid";
 import { chunkText } from "@/lib/chunking";
 import { embedTexts } from "@/ai/embeddings";
@@ -17,7 +17,7 @@ export type UploadResult =
 /**
  * Extract text from an uploaded file (PDF or plain text).
  */
-async function extractText(file: File): Promise<string> {
+async function extractTextFromFile(file: File): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
   const type = file.type as string;
 
@@ -26,9 +26,9 @@ async function extractText(file: File): Promise<string> {
   }
 
   if (type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-    const parser = new PDFParse({ data: new Uint8Array(buffer) });
-    const result = await parser.getText();
-    return result.text ?? "";
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await unpdfExtractText(pdf, { mergePages: true });
+    return text ?? "";
   }
 
   throw new Error(`Unsupported file type: ${type}. Use PDF or TXT.`);
@@ -53,7 +53,7 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
   }
 
   try {
-    const text = await extractText(file);
+    const text = await extractTextFromFile(file);
     if (!text.trim()) {
       return { success: false, error: "File contains no extractable text." };
     }

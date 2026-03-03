@@ -1,8 +1,9 @@
 import { embedText } from "./embeddings";
 import { findSimilarChunks, type SimilarChunk } from "@/db/vectors";
 
-const DEFAULT_TOP_K = 5;
-const MIN_SIMILARITY = 0.5;
+const DEFAULT_TOP_K = 10;
+/** Lower threshold so broad queries (e.g. "Tell me about Adnan") still get resume/doc chunks. */
+const MIN_SIMILARITY = 0.3;
 
 export interface RetrievalResult {
   chunks: SimilarChunk[];
@@ -19,8 +20,10 @@ export async function retrieveContext(
   const queryEmbedding = await embedText(query);
   const chunks = await findSimilarChunks(queryEmbedding, topK);
   const filtered = chunks.filter((c) => c.similarity >= MIN_SIMILARITY);
-  const context = filtered
+  // If everything was filtered out, still use top chunks so the model has something to work with
+  const toUse = filtered.length > 0 ? filtered : chunks.slice(0, 5);
+  const context = toUse
     .map((c) => c.chunkText)
     .join("\n\n---\n\n");
-  return { chunks: filtered, context };
+  return { chunks: toUse, context };
 }
