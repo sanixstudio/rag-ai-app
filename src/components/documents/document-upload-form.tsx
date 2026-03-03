@@ -60,6 +60,19 @@ export function DocumentUploadForm() {
           )}
         </label>
       </div>
+      <div>
+        <label htmlFor="tags" className="text-sm font-medium text-foreground">
+          Tags (optional)
+        </label>
+        <input
+          id="tags"
+          name="tags"
+          type="text"
+          placeholder="e.g. HR, Engineering (comma-separated)"
+          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          disabled={isPending}
+        />
+      </div>
       <Button type="submit" disabled={isPending || !selectedFile}>
         {isPending ? "Uploading…" : "Upload to knowledge base"}
       </Button>

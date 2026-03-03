@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Schema for chat message form (content + optional sessionId). */
+/** Schema for chat message form (content + optional sessionId + optional tag filter). */
 export const sendMessageSchema = z.object({
   content: z
     .string()
@@ -10,6 +10,8 @@ export const sendMessageSchema = z.object({
     (val) => (val === "" || val == null ? undefined : val),
     z.cuid().optional()
   ),
+  /** Restrict answers to documents with this tag */
+  tagFilter: z.string().max(100).optional(),
 });
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;

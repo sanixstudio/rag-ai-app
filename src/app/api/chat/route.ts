@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { content, sessionId: existingSessionId } = parsed.data;
+  const { content, sessionId: existingSessionId, tagFilter } = parsed.data;
   let sessionId = existingSessionId;
   let userId: string | null = null;
 
@@ -66,11 +66,24 @@ export async function POST(request: Request) {
 
     const encoder = new TextEncoder();
     let fullContent = "";
+    const sourcesChunks: { documentId: string; documentTitle: string; chunkIndex: number; chunkText: string }[] = [];
 
     const streamWithPersistence = new ReadableStream({
       async start(controller) {
         try {
-          for await (const delta of generateRagResponseStream(content)) {
+          for await (const delta of generateRagResponseStream(content, {
+            tagFilter: tagFilter ?? undefined,
+            onRetrieval(chunks) {
+              sourcesChunks.push(
+                ...chunks.map((c) => ({
+                  documentId: c.documentId,
+                  documentTitle: c.documentTitle,
+                  chunkIndex: c.chunkIndex,
+                  chunkText: c.chunkText.slice(0, 300),
+                }))
+              );
+            },
+          })) {
             fullContent += delta;
             controller.enqueue(encoder.encode(delta));
           }
@@ -83,11 +96,20 @@ export async function POST(request: Request) {
 
         try {
           if (sessionId && fullContent) {
+            const sources = sourcesChunks.length > 0
+              ? sourcesChunks.map((s) => ({
+                  documentId: s.documentId,
+                  documentTitle: s.documentTitle,
+                  chunkIndex: s.chunkIndex,
+                  chunkSnippet: s.chunkText,
+                }))
+              : undefined;
             await prisma.message.create({
               data: {
                 sessionId,
                 role: "assistant",
                 content: fullContent,
+                sources: sources ?? undefined,
               },
             });
             await prisma.chatSession.update({

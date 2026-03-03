@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageSquare, Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, Plus, BookOpen, Trash2, Loader2, Pencil, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sidebar,
@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteChatSession } from "@/actions/session";
+import { deleteChatSession, updateSessionTitle } from "@/actions/session";
 
 export interface ChatSessionItem {
   id: string;
@@ -51,6 +51,21 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
     e.preventDefault();
     e.stopPropagation();
     setPendingDelete({ id: session.id, title: session.title });
+  }
+
+  async function handleRename(e: React.MouseEvent, session: ChatSessionItem) {
+    e.preventDefault();
+    e.stopPropagation();
+    const newTitle = window.prompt("Rename chat", session.title);
+    if (newTitle != null && newTitle.trim()) {
+      const result = await updateSessionTitle(session.id, newTitle.trim());
+      if (result.success) {
+        router.refresh();
+        toast.success("Chat renamed.");
+      } else {
+        toast.error(result.error);
+      }
+    }
   }
 
   async function confirmDelete() {
@@ -112,6 +127,15 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => handleRename(e, session)}
+                        aria-label={`Rename ${session.title}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                         onClick={(e) => openDeleteConfirm(e, session)}
                         aria-label={`Delete ${session.title}`}
@@ -133,6 +157,14 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
               <Link href="/documents">
                 <BookOpen className="h-4 w-4" />
                 <span>Knowledge base</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/analytics">
+                <BarChart3 className="h-4 w-4" />
+                <span>Analytics</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

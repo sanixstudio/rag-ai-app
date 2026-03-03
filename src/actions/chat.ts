@@ -93,3 +93,37 @@ export async function sendMessage(formData: FormData) {
     };
   }
 }
+
+/**
+ * Submit thumbs up (1) or thumbs down (-1) for an assistant message.
+ * Only the session owner can submit feedback.
+ */
+export async function submitMessageFeedback(
+  messageId: string,
+  feedback: 1 | -1
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) return { success: false, error: "Sign in to submit feedback." };
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: { session: true },
+    });
+    if (!message || message.role !== "assistant")
+      return { success: false, error: "Message not found." };
+    if (message.session.userId) {
+      const user = await getOrCreateUserByClerk(clerkId);
+      if (!user || message.session.userId !== user.id)
+        return { success: false, error: "Not allowed." };
+    }
+    await prisma.message.update({
+      where: { id: messageId },
+      data: { feedback },
+    });
+    revalidatePath(`/chat/${message.sessionId}`);
+    return { success: true };
+  } catch (err) {
+    console.error("submitMessageFeedback error:", err);
+    return { success: false, error: "Failed to save feedback." };
+  }
+}

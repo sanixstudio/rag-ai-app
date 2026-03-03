@@ -25,6 +25,7 @@ model Document {
   content    String      @db.Text
   sourceUrl  String?
   metadata   Json?
+  tags       String[]    @default([])
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   embeddings Embedding[]
@@ -63,6 +64,8 @@ model Message {
   session   ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   role      String       // "user" | "assistant" | "system"
   content   String       @db.Text
+  sources   Json?        // [{ documentId, documentTitle, chunkIndex, chunkSnippet }] for assistant messages
+  feedback  Int?         // 1 = thumbs up, -1 = thumbs down, null = none
   createdAt DateTime     @default(now())
 
   @@index([sessionId])

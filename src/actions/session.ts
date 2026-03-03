@@ -71,6 +71,35 @@ export async function getChatSession(
 }
 
 /**
+ * Update a chat session title. Only the session owner can update.
+ */
+export async function updateSessionTitle(
+  sessionId: string,
+  title: string
+): Promise<{ success: boolean; error?: string }> {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) return { success: false, error: "Sign in to rename." };
+  const session = await prisma.chatSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true },
+  });
+  if (!session) return { success: false, error: "Chat not found." };
+  if (session.userId) {
+    const user = await getOrCreateUserByClerk(clerkId);
+    if (!user || session.userId !== user.id)
+      return { success: false, error: "Not allowed." };
+  }
+  const trimmed = title.trim().slice(0, 200) || "New chat";
+  await prisma.chatSession.update({
+    where: { id: sessionId },
+    data: { title: trimmed, updatedAt: new Date() },
+  });
+  revalidatePath("/chat");
+  revalidatePath(`/chat/${sessionId}`);
+  return { success: true };
+}
+
+/**
  * Delete a chat session and its messages (cascade). Only the session owner can delete.
  * @returns { success: true } or { success: false, error: string }
  */
@@ -142,4 +171,38 @@ export async function checkInternalAccess(clerkId: string): Promise<{
   const domain = email.split("@")[1]?.toLowerCase();
   if (!domain) return { allowed: false };
   return { allowed: allowedDomains.includes(domain) };
+}
+
+/**
+ * Simple analytics counts for the internal app (messages, documents, feedback).
+ * Requires auth.
+ */
+export async function getAnalyticsCounts(): Promise<{
+  messageCount: number;
+  documentCount: number;
+  embeddingCount: number;
+  feedbackUp: number;
+  feedbackDown: number;
+} | null> {
+  try {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) return null;
+    const [messageCount, documentCount, embeddingCount, feedbackUp, feedbackDown] =
+      await Promise.all([
+        prisma.message.count(),
+        prisma.document.count(),
+        prisma.embedding.count(),
+        prisma.message.count({ where: { role: "assistant", feedback: 1 } }),
+        prisma.message.count({ where: { role: "assistant", feedback: -1 } }),
+      ]);
+    return {
+      messageCount,
+      documentCount,
+      embeddingCount,
+      feedbackUp,
+      feedbackDown,
+    };
+  } catch {
+    return null;
+  }
 }

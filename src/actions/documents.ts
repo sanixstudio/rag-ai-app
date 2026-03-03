@@ -76,6 +76,11 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
     }
 
     const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
+    const rawTags = (formData.get("tags") as string | null)?.trim() ?? "";
+    const tags = rawTags
+      ? rawTags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 20)
+      : [];
+
     const chunks = chunkText(text);
     if (chunks.length === 0) {
       return { success: false, error: ERROR_MESSAGES.upload.noChunks };
@@ -89,6 +94,7 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
         content: text,
         sourceUrl: null,
         metadata: { originalName: file.name, chunkCount: chunks.length },
+        tags,
       },
     });
 
@@ -122,9 +128,27 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
 export type DocumentListItem = {
   id: string;
   title: string;
+  tags: string[];
   createdAt: Date;
+  updatedAt: Date;
   chunkCount: number;
 };
+
+/**
+ * Get distinct tags from all documents (for filter dropdowns).
+ */
+export async function getDocumentTags(): Promise<string[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+  const docs = await prisma.document.findMany({
+    select: { tags: true },
+  });
+  const set = new Set<string>();
+  for (const d of docs) {
+    for (const t of d.tags) set.add(t);
+  }
+  return Array.from(set).sort();
+}
 
 /**
  * List all documents in the knowledge base (for internal users).
@@ -141,7 +165,9 @@ export async function listDocuments(): Promise<DocumentListItem[]> {
   return docs.map((d) => ({
     id: d.id,
     title: d.title,
+    tags: d.tags ?? [],
     createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
     chunkCount: d._count.embeddings,
   }));
 }
@@ -165,6 +191,65 @@ export async function deleteDocument(documentId: string): Promise<{
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to delete document",
+    };
+  }
+}
+
+/**
+ * Re-ingest a document: re-chunk, re-embed, replace existing embeddings. Keeps title, content, tags.
+ */
+export async function reingestDocument(documentId: string): Promise<{
+  success: boolean;
+  chunks?: number;
+  error?: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, error: "Sign in to re-index documents." };
+  }
+  try {
+    const doc = await prisma.document.findUnique({
+      where: { id: documentId },
+    });
+    if (!doc) return { success: false, error: "Document not found." };
+
+    await prisma.embedding.deleteMany({ where: { documentId } });
+
+    const chunks = chunkText(doc.content);
+    if (chunks.length === 0) {
+      return { success: false, error: "No chunks produced." };
+    }
+
+    const embeddings = await embedTexts(chunks);
+    for (let i = 0; i < chunks.length; i++) {
+      const vectorStr = `[${embeddings[i].join(",")}]`;
+      const id = nanoid();
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "Embedding" (id, "documentId", "chunkIndex", "chunkText", embedding, "createdAt")
+         VALUES ($1, $2, $3, $4, $5::vector, NOW())`,
+        id,
+        documentId,
+        i,
+        chunks[i],
+        vectorStr
+      );
+    }
+
+    const metadata =
+      doc.metadata && typeof doc.metadata === "object"
+        ? { ...(doc.metadata as Record<string, unknown>), chunkCount: chunks.length }
+        : { chunkCount: chunks.length };
+    await prisma.document.update({
+      where: { id: documentId },
+      data: { updatedAt: new Date(), metadata },
+    });
+
+    return { success: true, chunks: chunks.length };
+  } catch (err) {
+    console.error("reingestDocument error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to re-index",
     };
   }
 }
