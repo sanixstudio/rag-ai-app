@@ -21,7 +21,7 @@ export default async function AppLayout({
 
   const user = await getOrCreateUserByClerk(clerkId);
   const sessions = user
-    ? (await getChatSessions(user.id)).map((s) => ({ id: s.id, title: s.title }))
+    ? (await getChatSessions(user.id)).map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }))
     : [];
 
   return (

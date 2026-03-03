@@ -30,7 +30,7 @@ export async function retrieveContext(
       where: { tags: { has: options.tagFilter.trim() } },
       select: { id: true },
     });
-    filterDocumentIds = docs.map((d) => d.id);
+    filterDocumentIds = docs.map((d: { id: string }) => d.id);
     if (filterDocumentIds.length === 0) {
       return { chunks: [], context: "" };
     }

@@ -149,7 +149,7 @@ export async function getDocumentTags(): Promise<string[]> {
     select: { tags: true },
   });
   const set = new Set<string>();
-  for (const d of docs) {
+  for (const d of docs as { tags: string[] }[]) {
     for (const t of d.tags) set.add(t);
   }
   return Array.from(set).sort();
