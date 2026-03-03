@@ -22,7 +22,7 @@ export default async function ChatSessionPage({ params }: PageProps) {
       <ChatPanel
         initialSessionId={session.id}
         initialTags={initialTags}
-        initialMessages={session.messages.map((m) => ({
+        initialMessages={session.messages.map((m: { id: string; role: string; content: string; sources: unknown; feedback: number | null }) => ({
           id: m.id,
           role: m.role as "user" | "assistant" | "system",
           content: m.content,

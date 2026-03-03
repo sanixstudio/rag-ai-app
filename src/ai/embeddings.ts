@@ -33,5 +33,5 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
     input: trimmed,
   });
   const sorted = response.data.sort((a, b) => a.index - b.index);
-  return sorted.map((d) => d.embedding);
+  return sorted.map((d: { embedding: number[] }) => d.embedding);
 }

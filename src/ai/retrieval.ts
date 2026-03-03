@@ -30,10 +30,11 @@ export async function retrieveContext(
       where: { tags: { has: options.tagFilter.trim() } },
       select: { id: true },
     });
-    filterDocumentIds = docs.map((d: { id: string }) => d.id);
-    if (filterDocumentIds.length === 0) {
+    const ids = docs.map((d: { id: string }) => d.id);
+    if (ids.length === 0) {
       return { chunks: [], context: "" };
     }
+    filterDocumentIds = ids;
   }
   const chunks = await findSimilarChunks(
     queryEmbedding,
@@ -45,6 +46,6 @@ export async function retrieveContext(
     filtered.length > 0
       ? filtered
       : chunks.slice(0, RAG_CONFIG.fallbackChunkCount);
-  const context = toUse.map((c) => c.chunkText).join("\n\n---\n\n");
+  const context = toUse.map((c: SimilarChunk) => c.chunkText).join("\n\n---\n\n");
   return { chunks: toUse, context };
 }

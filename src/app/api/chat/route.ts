@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { generateRagResponseStream } from "@/ai/chat";
+import type { SimilarChunk } from "@/db/vectors";
 import { prisma } from "@/db";
 import { getOrCreateUserByClerk, getChatSession } from "@/actions/session";
 import { sendMessageSchema } from "@/lib/validations";
@@ -80,9 +81,9 @@ export async function POST(request: Request) {
         try {
           for await (const delta of generateRagResponseStream(content, {
             tagFilter: tagFilter ?? undefined,
-            onRetrieval(chunks) {
+            onRetrieval(chunks: SimilarChunk[]) {
               sourcesChunks.push(
-                ...chunks.map((c) => ({
+                ...chunks.map((c: SimilarChunk) => ({
                   documentId: c.documentId,
                   documentTitle: c.documentTitle,
                   chunkIndex: c.chunkIndex,
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
         try {
           if (sessionId && fullContent) {
             const sources = sourcesChunks.length > 0
-              ? sourcesChunks.map((s) => ({
+              ? sourcesChunks.map((s: { documentId: string; documentTitle: string; chunkIndex: number; chunkText: string }) => ({
                   documentId: s.documentId,
                   documentTitle: s.documentTitle,
                   chunkIndex: s.chunkIndex,
