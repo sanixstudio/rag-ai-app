@@ -36,3 +36,9 @@ export const UPLOAD_CONFIG = {
   allowedMimeTypes: ["application/pdf", "text/plain"] as const,
   allowedExtensions: [".pdf", ".txt"] as const,
 } as const;
+
+/** Document tags: max per document and max length per tag. */
+export const TAG_CONFIG = {
+  maxTagsPerDocument: 20,
+  maxTagLength: 50,
+} as const;

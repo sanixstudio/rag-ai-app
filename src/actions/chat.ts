@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { generateRagResponse } from "@/ai/chat";
 import { prisma } from "@/db";
 import { ERROR_MESSAGES } from "@/lib/errors";
-import { sendMessageSchema } from "@/lib/validations";
+import { sendMessageSchema, feedbackSchema, messageIdSchema } from "@/lib/validations";
 import { getOrCreateUserByClerk } from "./session";
 
 /**
@@ -102,11 +102,19 @@ export async function submitMessageFeedback(
   messageId: string,
   feedback: 1 | -1
 ): Promise<{ success: boolean; error?: string }> {
+  const feedbackParsed = feedbackSchema.safeParse(feedback);
+  if (!feedbackParsed.success) {
+    return { success: false, error: "Invalid feedback value." };
+  }
+  const messageIdParsed = messageIdSchema.safeParse(messageId);
+  if (!messageIdParsed.success) {
+    return { success: false, error: "Invalid message id." };
+  }
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) return { success: false, error: "Sign in to submit feedback." };
     const message = await prisma.message.findUnique({
-      where: { id: messageId },
+      where: { id: messageIdParsed.data },
       include: { session: true },
     });
     if (!message || message.role !== "assistant")
@@ -117,8 +125,8 @@ export async function submitMessageFeedback(
         return { success: false, error: "Not allowed." };
     }
     await prisma.message.update({
-      where: { id: messageId },
-      data: { feedback },
+      where: { id: messageIdParsed.data },
+      data: { feedback: feedbackParsed.data },
     });
     revalidatePath(`/chat/${message.sessionId}`);
     return { success: true };

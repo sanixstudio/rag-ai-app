@@ -22,3 +22,12 @@ export const createSessionSchema = z.object({
 });
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
+
+/** Document ID (CUID) for delete/reingest. */
+export const documentIdSchema = z.cuid({ message: "Invalid document id" });
+
+/** Message feedback: thumbs up (1) or thumbs down (-1). */
+export const feedbackSchema = z.union([z.literal(1), z.literal(-1)]);
+
+/** Message ID (CUID) for feedback. */
+export const messageIdSchema = z.cuid({ message: "Invalid message id" });

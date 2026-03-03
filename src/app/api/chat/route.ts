@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { generateRagResponseStream } from "@/ai/chat";
 import { prisma } from "@/db";
-import { getOrCreateUserByClerk } from "@/actions/session";
+import { getOrCreateUserByClerk, getChatSession } from "@/actions/session";
 import { sendMessageSchema } from "@/lib/validations";
 import { ERROR_MESSAGES } from "@/lib/errors";
 
@@ -33,16 +33,23 @@ export async function POST(request: Request) {
 
   const { content, sessionId: existingSessionId, tagFilter } = parsed.data;
   let sessionId = existingSessionId;
-  let userId: string | null = null;
 
-  try {
-    const { userId: clerkId } = await auth();
-    if (clerkId) {
-      const user = await getOrCreateUserByClerk(clerkId);
-      userId = user?.id ?? null;
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const user = await getOrCreateUserByClerk(clerkId);
+  const userId = user?.id ?? null;
+
+  if (existingSessionId) {
+    const session = await getChatSession(existingSessionId, clerkId);
+    if (!session) {
+      return NextResponse.json(
+        { error: "Chat not found or access denied." },
+        { status: 403 }
+      );
     }
-  } catch {
-    // Auth unavailable (e.g. Clerk not configured)
   }
 
   try {

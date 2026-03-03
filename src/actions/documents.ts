@@ -3,11 +3,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { getDocumentProxy, extractText as unpdfExtractText } from "unpdf";
 import { nanoid } from "nanoid";
-import { UPLOAD_CONFIG } from "@/config/rag";
+import { UPLOAD_CONFIG, TAG_CONFIG } from "@/config/rag";
 import { embedTexts } from "@/ai/embeddings";
 import { prisma } from "@/db";
 import { chunkText } from "@/lib/chunking";
 import { ERROR_MESSAGES } from "@/lib/errors";
+import { documentIdSchema } from "@/lib/validations";
 
 export type UploadResult =
   | { success: true; documentId: string; title: string; chunks: number }
@@ -78,7 +79,11 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
     const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
     const rawTags = (formData.get("tags") as string | null)?.trim() ?? "";
     const tags = rawTags
-      ? rawTags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 20)
+      ? rawTags
+          .split(",")
+          .map((t) => t.trim().slice(0, TAG_CONFIG.maxTagLength))
+          .filter(Boolean)
+          .slice(0, TAG_CONFIG.maxTagsPerDocument)
       : [];
 
     const chunks = chunkText(text);
@@ -179,12 +184,16 @@ export async function deleteDocument(documentId: string): Promise<{
   success: boolean;
   error?: string;
 }> {
+  const parsed = documentIdSchema.safeParse(documentId);
+  if (!parsed.success) {
+    return { success: false, error: "Invalid document id." };
+  }
   const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Sign in to delete documents." };
   }
   try {
-    await prisma.document.delete({ where: { id: documentId } });
+    await prisma.document.delete({ where: { id: parsed.data } });
     return { success: true };
   } catch (err) {
     console.error("deleteDocument error:", err);
@@ -203,17 +212,22 @@ export async function reingestDocument(documentId: string): Promise<{
   chunks?: number;
   error?: string;
 }> {
+  const parsed = documentIdSchema.safeParse(documentId);
+  if (!parsed.success) {
+    return { success: false, error: "Invalid document id." };
+  }
+  const id = parsed.data;
   const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Sign in to re-index documents." };
   }
   try {
     const doc = await prisma.document.findUnique({
-      where: { id: documentId },
+      where: { id },
     });
     if (!doc) return { success: false, error: "Document not found." };
 
-    await prisma.embedding.deleteMany({ where: { documentId } });
+    await prisma.embedding.deleteMany({ where: { documentId: id } });
 
     const chunks = chunkText(doc.content);
     if (chunks.length === 0) {
@@ -228,7 +242,7 @@ export async function reingestDocument(documentId: string): Promise<{
         `INSERT INTO "Embedding" (id, "documentId", "chunkIndex", "chunkText", embedding, "createdAt")
          VALUES ($1, $2, $3, $4, $5::vector, NOW())`,
         id,
-        documentId,
+        id,
         i,
         chunks[i],
         vectorStr
@@ -240,7 +254,7 @@ export async function reingestDocument(documentId: string): Promise<{
         ? { ...(doc.metadata as Record<string, unknown>), chunkCount: chunks.length }
         : { chunkCount: chunks.length };
     await prisma.document.update({
-      where: { id: documentId },
+      where: { id },
       data: { updatedAt: new Date(), metadata },
     });
 
