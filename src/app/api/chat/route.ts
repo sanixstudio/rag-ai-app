@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { generateRagResponseStream } from "@/ai/chat";
+import { prisma } from "@/db";
+import { getOrCreateUserByClerk } from "@/actions/session";
+import { sendMessageSchema } from "@/lib/validations";
+import { ERROR_MESSAGES } from "@/lib/errors";
+
+/**
+ * POST /api/chat — Stream RAG response.
+ * Body: { content: string, sessionId?: string }
+ * Response: stream of UTF-8 text chunks; header X-Session-Id set for client redirect.
+ * Creates session and saves user message before streaming; saves assistant message when stream ends.
+ */
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+
+  const parsed = sendMessageSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const { content, sessionId: existingSessionId } = parsed.data;
+  let sessionId = existingSessionId;
+  let userId: string | null = null;
+
+  try {
+    const { userId: clerkId } = await auth();
+    if (clerkId) {
+      const user = await getOrCreateUserByClerk(clerkId);
+      userId = user?.id ?? null;
+    }
+  } catch {
+    // Auth unavailable (e.g. Clerk not configured)
+  }
+
+  try {
+    if (!sessionId) {
+      const session = await prisma.chatSession.create({
+        data: {
+          userId,
+          title: content.slice(0, 50) || "New chat",
+        },
+      });
+      sessionId = session.id;
+    }
+
+    await prisma.message.create({
+      data: {
+        sessionId,
+        role: "user",
+        content,
+      },
+    });
+
+    const encoder = new TextEncoder();
+    let fullContent = "";
+
+    const streamWithPersistence = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const delta of generateRagResponseStream(content)) {
+            fullContent += delta;
+            controller.enqueue(encoder.encode(delta));
+          }
+        } catch (err) {
+          console.error("RAG stream error:", err);
+          const fallback = "\n\nSorry, something went wrong. Please try again.";
+          fullContent += fallback;
+          controller.enqueue(encoder.encode(fallback));
+        }
+
+        try {
+          if (sessionId && fullContent) {
+            await prisma.message.create({
+              data: {
+                sessionId,
+                role: "assistant",
+                content: fullContent,
+              },
+            });
+            await prisma.chatSession.update({
+              where: { id: sessionId },
+              data: { updatedAt: new Date() },
+            });
+          }
+        } catch (dbErr) {
+          console.error("Failed to persist assistant message:", dbErr);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(streamWithPersistence, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Session-Id": sessionId ?? "",
+      },
+    });
+  } catch (err) {
+    console.error("POST /api/chat error:", err);
+    return NextResponse.json(
+      { error: ERROR_MESSAGES.chat.generic },
+      { status: 500 }
+    );
+  }
+}

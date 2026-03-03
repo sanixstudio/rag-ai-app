@@ -40,3 +40,45 @@ export async function generateRagResponse(
   }
   return content;
 }
+
+/**
+ * Generate a RAG response as a stream of content chunks (for live UI updates).
+ * Yields each delta from the model; caller can accumulate for persistence.
+ *
+ * @param userMessage - User query
+ * @param options.topK - Number of chunks to retrieve (default from config)
+ * @yields Content delta strings from the completion stream
+ */
+export async function* generateRagResponseStream(
+  userMessage: string,
+  options: { topK?: number } = {}
+): AsyncGenerator<string, string, undefined> {
+  const { context } = await retrieveContext(
+    userMessage,
+    options.topK ?? RAG_CONFIG.defaultTopK
+  );
+  const systemContent = context
+    ? `${SYSTEM_PROMPT}\n\n## Context from knowledge base\n${context}`
+    : `${SYSTEM_PROMPT}\n\n(No relevant context was found in the knowledge base for this query.)`;
+
+  const openai = new OpenAI({ apiKey: getOpenAiApiKey() });
+  const stream = await openai.chat.completions.create({
+    model: RAG_CONFIG.chatModel,
+    messages: [
+      { role: "system", content: systemContent },
+      { role: "user", content: userMessage },
+    ],
+    max_tokens: RAG_CONFIG.chatMaxTokens,
+    stream: true,
+  });
+
+  let fullContent = "";
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta?.content ?? "";
+    if (delta) {
+      fullContent += delta;
+      yield delta;
+    }
+  }
+  return fullContent;
+}
