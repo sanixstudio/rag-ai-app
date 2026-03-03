@@ -25,6 +25,19 @@ A production-ready RAG (Retrieval-Augmented Generation) AI chatbot that answers 
 | AI         | OpenAI (embeddings + chat) |
 | Validation | Zod                    |
 
+## Documentation
+
+Detailed documentation is in the **[`docs/`](./docs/README.md)** folder:
+
+| Document | Description |
+|----------|-------------|
+| [**ARCHITECTURE**](./docs/ARCHITECTURE.md) | System design, RAG pipeline, data flow, folder structure |
+| [**SETUP**](./docs/SETUP.md) | Step-by-step setup and first run |
+| [**CONFIGURATION**](./docs/CONFIGURATION.md) | Environment variables, RAG tuning, upload limits |
+| [**API**](./docs/API.md) | Server actions, validation schemas, types |
+| [**DEPLOYMENT**](./docs/DEPLOYMENT.md) | Production deploy (Vercel, Neon, Clerk), checklist, troubleshooting |
+| [**DEVELOPMENT**](./docs/DEVELOPMENT.md) | Local dev workflow, scripts, conventions |
+
 ## Prerequisites
 
 - Node.js 20+
@@ -111,8 +124,8 @@ scripts/
 
 ## Configuration
 
-- **Environment** — `src/config/env.ts` validates required vars (`DATABASE_URL`, `OPENAI_API_KEY`) when used; optional Clerk keys for auth.
-- **RAG tuning** — `src/config/rag.ts` holds embedding/chat model names, `topK`, `minSimilarity`, chunk size/overlap, and upload limits. Change in one place to tune behavior.
+- **Environment** — `src/config/env.ts` validates required vars (`DATABASE_URL`, `OPENAI_API_KEY`) when used; optional Clerk keys for auth. See [docs/CONFIGURATION.md](./docs/CONFIGURATION.md).
+- **RAG tuning** — `src/config/rag.ts` holds embedding/chat model names, `topK`, `minSimilarity`, chunk size/overlap, and upload limits. See [docs/CONFIGURATION.md](./docs/CONFIGURATION.md#rag-config).
 - **Errors** — `src/lib/errors.ts` centralizes user-facing error messages for actions.
 
 ## Database schema (summary)
