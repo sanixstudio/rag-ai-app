@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { MessageSquare, Plus, BookOpen } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { MessageSquare, Plus, BookOpen, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { deleteChatSession } from "@/actions/session";
 
 export interface ChatSessionItem {
   id: string;
@@ -27,6 +30,22 @@ interface AppSidebarProps {
 
 export function AppSidebar({ sessions }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleDeleteSession(e: React.MouseEvent, sessionId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const result = await deleteChatSession(sessionId);
+    if (result.success) {
+      if (pathname === `/chat/${sessionId}`) {
+        router.push("/chat");
+      }
+      router.refresh();
+      toast.success("Chat deleted.");
+    } else {
+      toast.error(result.error ?? "Failed to delete chat");
+    }
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -56,12 +75,27 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
               ) : (
                 sessions.map((session) => (
                   <SidebarMenuItem key={session.id}>
-                    <SidebarMenuButton asChild isActive={pathname === `/chat/${session.id}`}>
-                      <Link href={`/chat/${session.id}`}>
-                        <MessageSquare className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{session.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    <div className="flex w-full items-center gap-0.5">
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === `/chat/${session.id}`}
+                        className="flex-1 min-w-0"
+                      >
+                        <Link href={`/chat/${session.id}`}>
+                          <MessageSquare className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{session.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => handleDeleteSession(e, session.id)}
+                        aria-label={`Delete ${session.title}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </SidebarMenuItem>
                 ))
               )}

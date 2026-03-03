@@ -144,6 +144,16 @@ Fetches a single chat session with all messages. Respects ownership: sessions wi
 
 ---
 
+#### `deleteChatSession(sessionId: string)`
+
+Deletes a chat session and its messages (cascade). Only the session owner can delete.
+
+**Location:** `src/actions/session.ts`
+
+**Returns:** `Promise<{ success: boolean; error?: string }>`. On failure, `error` is a user-facing string (e.g. "You can only delete your own chats.").
+
+---
+
 ## Validation schemas
 
 Defined in `src/lib/validations.ts`. Used by actions to parse and validate input.

@@ -1,6 +1,7 @@
 "use server";
 
-import { clerkClient } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getAllowedEmailDomains } from "@/config/env";
 import { prisma } from "@/db";
 
@@ -67,6 +68,49 @@ export async function getChatSession(
   });
   if (!ourUser || session.userId !== ourUser.id) return null;
   return session;
+}
+
+/**
+ * Delete a chat session and its messages (cascade). Only the session owner can delete.
+ * @returns { success: true } or { success: false, error: string }
+ */
+export async function deleteChatSession(sessionId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    return { success: false, error: "Sign in to delete chats." };
+  }
+
+  const session = await prisma.chatSession.findUnique({
+    where: { id: sessionId },
+    select: { id: true, userId: true },
+  });
+  if (!session) {
+    return { success: false, error: "Chat not found." };
+  }
+  if (session.userId) {
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ clerkId }, { id: clerkId }] },
+    });
+    if (!user || session.userId !== user.id) {
+      return { success: false, error: "You can only delete your own chats." };
+    }
+  }
+
+  try {
+    await prisma.chatSession.delete({ where: { id: sessionId } });
+    revalidatePath("/chat");
+    revalidatePath(`/chat/${sessionId}`);
+    return { success: true };
+  } catch (err) {
+    console.error("deleteChatSession error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to delete chat",
+    };
+  }
 }
 
 /**
