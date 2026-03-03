@@ -1,0 +1,69 @@
+// RAG AI Chatbot - Neon PostgreSQL with pgvector
+// Run: npx prisma generate
+// Vector column is managed via raw SQL migration; use db queries for similarity search.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  clerkId       String         @unique
+  email         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  chatSessions  ChatSession[]
+}
+
+model Document {
+  id         String      @id @default(cuid())
+  title      String
+  content    String      @db.Text
+  sourceUrl  String?
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  embeddings Embedding[]
+
+  @@index([createdAt])
+}
+
+model Embedding {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  chunkText  String   @db.Text
+  // Vector stored via raw SQL; dimension 1536 for text-embedding-3-small
+  createdAt  DateTime @default(now())
+
+  @@index([documentId])
+}
+
+model ChatSession {
+  id        String    @id @default(cuid())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  title     String    @default("New chat")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id        String       @id @default(cuid())
+  sessionId String
+  session   ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String       // "user" | "assistant" | "system"
+  content   String       @db.Text
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId])
+}
