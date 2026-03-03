@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageSquare, Plus, BookOpen, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sidebar,
@@ -17,6 +18,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { deleteChatSession } from "@/actions/session";
 
 export interface ChatSessionItem {
@@ -31,13 +41,26 @@ interface AppSidebarProps {
 export function AppSidebar({ sessions }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  async function handleDeleteSession(e: React.MouseEvent, sessionId: string) {
+  function openDeleteConfirm(e: React.MouseEvent, session: ChatSessionItem) {
     e.preventDefault();
     e.stopPropagation();
-    const result = await deleteChatSession(sessionId);
+    setPendingDelete({ id: session.id, title: session.title });
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setIsDeleting(true);
+    const result = await deleteChatSession(pendingDelete.id);
+    setIsDeleting(false);
+    setPendingDelete(null);
     if (result.success) {
-      if (pathname === `/chat/${sessionId}`) {
+      if (pathname === `/chat/${pendingDelete.id}`) {
         router.push("/chat");
       }
       router.refresh();
@@ -90,7 +113,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => handleDeleteSession(e, session.id)}
+                        onClick={(e) => openDeleteConfirm(e, session)}
                         aria-label={`Delete ${session.title}`}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -115,6 +138,37 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this conversation. This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={confirmDelete}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sidebar>
   );
 }
