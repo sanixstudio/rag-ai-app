@@ -29,7 +29,7 @@ export function DocumentUploadForm() {
   return (
     <form key={formKey} action={formAction} className="space-y-4">
       <div
-        className="rounded-xl border border-dashed border-border bg-muted/30 p-8"
+        className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-8 transition-colors hover:bg-muted/50"
         onClick={() => fileInputRef.current?.click()}
         onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
         role="button"
@@ -69,7 +69,7 @@ export function DocumentUploadForm() {
           name="tags"
           type="text"
           placeholder="e.g. HR, Engineering (comma-separated)"
-          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
           disabled={isPending}
         />
       </div>

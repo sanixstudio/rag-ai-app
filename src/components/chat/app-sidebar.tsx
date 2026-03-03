@@ -86,11 +86,11 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/80">
+      <SidebarHeader className="border-b border-sidebar-border/80 px-2 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/chat"}>
+            <SidebarMenuButton asChild isActive={pathname === "/chat"} className="rounded-xl">
               <Link href="/chat">
                 <Plus className="h-4 w-4" />
                 <span>New chat</span>
@@ -101,7 +101,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>History</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-medium tracking-wide text-muted-foreground/90">History</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {sessions.length === 0 ? (
@@ -117,7 +117,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
                       <SidebarMenuButton
                         asChild
                         isActive={pathname === `/chat/${session.id}`}
-                        className="flex-1 min-w-0"
+                        className="flex-1 min-w-0 rounded-xl"
                       >
                         <Link href={`/chat/${session.id}`}>
                           <MessageSquare className="h-4 w-4 shrink-0" />
@@ -150,10 +150,10 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="border-t border-sidebar-border/80 px-2 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="rounded-xl">
               <Link href="/documents">
                 <BookOpen className="h-4 w-4" />
                 <span>Knowledge base</span>
@@ -161,7 +161,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="rounded-xl">
               <Link href="/analytics">
                 <BarChart3 className="h-4 w-4" />
                 <span>Analytics</span>

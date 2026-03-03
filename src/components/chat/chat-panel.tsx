@@ -155,9 +155,9 @@ export function ChatPanel({
       <ScrollArea className="flex-1 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-6">
           {displayMessages.length === 0 && !pendingUserMessage && (
-            <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-              <p className="font-medium">Ask anything from your knowledge base</p>
-              <p className="mt-1 text-sm">
+            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-10 text-center">
+              <p className="font-semibold tracking-tight text-foreground">Ask anything from your knowledge base</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
                 Your question will be answered using semantic search over internal docs.
               </p>
             </div>
@@ -172,13 +172,13 @@ export function ChatPanel({
             >
               <div
                 className={cn(
-                  "max-w-[85%] rounded-lg px-4 py-2.5",
+                  "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
                   m.role === "user"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    : "bg-muted/80 border border-border/40"
                 )}
               >
-                <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
                 {m.role === "assistant" && (
                   <>
                     {m.sources && m.sources.length > 0 ? (
@@ -254,14 +254,14 @@ export function ChatPanel({
           ))}
           {pendingUserMessage != null && (
             <div className="flex justify-end gap-3">
-              <div className="max-w-[85%] rounded-lg bg-primary text-primary-foreground px-4 py-2.5">
-                <p className="text-sm whitespace-pre-wrap">{pendingUserMessage}</p>
+              <div className="max-w-[85%] rounded-2xl bg-primary text-primary-foreground px-4 py-3 shadow-sm">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{pendingUserMessage}</p>
               </div>
             </div>
           )}
           {showThinking && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-lg bg-muted px-4 py-2.5 flex items-center gap-2">
+              <div className="max-w-[85%] rounded-2xl bg-muted/80 border border-border/40 px-4 py-3 flex items-center gap-2 shadow-sm">
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Thinking…</span>
               </div>
@@ -269,8 +269,8 @@ export function ChatPanel({
           )}
           {streamingContent && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-lg bg-muted px-4 py-2.5">
-                <p className="text-sm whitespace-pre-wrap">{streamingContent}</p>
+              <div className="max-w-[85%] rounded-2xl bg-muted/80 border border-border/40 px-4 py-3 shadow-sm">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{streamingContent}</p>
               </div>
             </div>
           )}
@@ -278,18 +278,18 @@ export function ChatPanel({
         </div>
       </ScrollArea>
 
-      <div className="border-t bg-background p-4">
-        <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-2">
+      <div className="border-t border-border/50 bg-background/95 backdrop-blur-sm p-4">
+        <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-3">
           {initialTags.length > 0 && (
             <div className="flex items-center gap-2">
-              <label htmlFor="tag-filter" className="text-xs text-muted-foreground shrink-0">
+              <label htmlFor="tag-filter" className="text-xs font-medium text-muted-foreground shrink-0">
                 Filter by source:
               </label>
               <select
                 id="tag-filter"
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
               >
                 <option value="">All documents</option>
                 {initialTags.map((t) => (
@@ -307,7 +307,7 @@ export function ChatPanel({
               name="content"
               placeholder="Ask a question..."
               rows={1}
-              className="min-h-[44px] max-h-32 resize-none"
+              className="min-h-[46px] max-h-32 resize-none rounded-xl border-border/60 focus-visible:ring-2"
               disabled={isStreaming}
               required
               onKeyDown={(e) => {
@@ -324,7 +324,7 @@ export function ChatPanel({
               type="submit"
               size="icon"
               disabled={isStreaming}
-              className="shrink-0 h-11 w-11"
+              className="shrink-0 h-11 w-11 rounded-xl shadow-sm"
             >
               {isStreaming ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

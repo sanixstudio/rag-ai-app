@@ -91,18 +91,18 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <Input
           placeholder="Search by title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
+          className="max-w-xs rounded-xl border-border/60"
         />
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
+          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
         >
           <option value="">All tags</option>
           {allTags.map((t) => (
@@ -114,7 +114,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as "date" | "title")}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
+          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
         >
           <option value="date">Sort by date</option>
           <option value="title">Sort by title</option>
@@ -124,7 +124,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         {filteredAndSorted.map((doc) => (
           <li
             key={doc.id}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3"
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
