@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { getDocumentProxy, extractText as unpdfExtractText } from "unpdf";
 import { nanoid } from "nanoid";
 import { UPLOAD_CONFIG } from "@/config/rag";
@@ -46,8 +47,14 @@ async function extractTextFromFile(file: File): Promise<string> {
 
 /**
  * Upload a file to the knowledge base: extract text, chunk, embed, store.
+ * Requires an authenticated user (internal app).
  */
 export async function uploadDocument(formData: FormData): Promise<UploadResult> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, error: "Sign in to upload documents." };
+  }
+
   const file = formData.get("file") as File | null;
   if (!file || !(file instanceof File)) {
     return { success: false, error: ERROR_MESSAGES.upload.noFile };
@@ -109,5 +116,55 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
     console.error("uploadDocument error:", err);
     const message = err instanceof Error ? err.message : "Upload failed.";
     return { success: false, error: message };
+  }
+}
+
+export type DocumentListItem = {
+  id: string;
+  title: string;
+  createdAt: Date;
+  chunkCount: number;
+};
+
+/**
+ * List all documents in the knowledge base (for internal users).
+ * Requires an authenticated user.
+ */
+export async function listDocuments(): Promise<DocumentListItem[]> {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  const docs = await prisma.document.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { embeddings: true } } },
+  });
+  return docs.map((d) => ({
+    id: d.id,
+    title: d.title,
+    createdAt: d.createdAt,
+    chunkCount: d._count.embeddings,
+  }));
+}
+
+/**
+ * Delete a document and its embeddings (cascade). Internal use only; requires auth.
+ */
+export async function deleteDocument(documentId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, error: "Sign in to delete documents." };
+  }
+  try {
+    await prisma.document.delete({ where: { id: documentId } });
+    return { success: true };
+  } catch (err) {
+    console.error("deleteDocument error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to delete document",
+    };
   }
 }

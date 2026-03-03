@@ -19,6 +19,7 @@ Handled in `src/config/env.ts`. Required vars are validated when first used (e.g
 |----------|---------|-------------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Layout, ClerkProvider | Clerk publishable key. If unset, Clerk is not loaded and auth is effectively disabled. |
 | `CLERK_SECRET_KEY` | Clerk server-side | Clerk secret key. Set when using Clerk. |
+| `ALLOWED_EMAIL_DOMAINS` | App layout (internal access) | Comma-separated email domains (e.g. `company.com,partner.org`). When set, only users whose email domain is in this list can use the app; others are redirected to sign-in with an “access restricted” message. When unset, all signed-in users are allowed. |
 
 ### Optional (Clerk URLs)
 
@@ -26,7 +27,7 @@ Clerk uses defaults if these are not set. Override only if you need custom paths
 
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` — Sign-in path (default: `/sign-in`).
 - `NEXT_PUBLIC_CLERK_SIGN_UP_URL` — Sign-up path (default: `/sign-up`).
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` — Where to send after sign-in (default: `/`).
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` — Where to send after sign-in (default: `/`). Set to `/chat` to send users straight to chat.
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` — Where to send after sign-up (default: `/`).
 
 ### Access in code
@@ -91,17 +92,16 @@ Change these to adjust copy or localization without touching action logic.
 
 ---
 
-## Public routes (middleware)
+## Protected routes (middleware)
 
-In `src/middleware.ts`, these paths are **public** (no sign-in required):
+The app is **internal-only**: chat and knowledge base require sign-in.
 
-- `/`
-- `/chat`, `/chat/*`
-- `/documents`
-- `/sign-in`, `/sign-up` (and Clerk catch-all)
-- `/api/webhooks/*`
+In `src/middleware.ts`:
 
-All other routes require a signed-in user (Clerk). To protect more routes, remove them from the `isPublicRoute` matcher in `middleware.ts`.
+- **Public** (no sign-in): `/`, `/sign-in`, `/sign-up`, `/api/webhooks/*`
+- **Protected**: `/chat`, `/chat/*`, `/documents`, and all `/api/*` except webhooks. Unauthenticated users are redirected to sign-in (or receive 401 for API requests).
+
+Optional **allowlist**: set `ALLOWED_EMAIL_DOMAINS` so only users with matching email domains can access the app after sign-in (see above).
 
 ---
 
@@ -113,4 +113,4 @@ All other routes require a signed-in user (Clerk). To protect more routes, remov
 | Embedding/chat model, topK, similarity, chunk size | `src/config/rag.ts` |
 | Upload size or allowed types | `src/config/rag.ts` → `UPLOAD_CONFIG` |
 | User-facing error text | `src/lib/errors.ts` |
-| Which routes require auth | `src/middleware.ts` |
+| Which routes require auth / allowlist | `src/middleware.ts`, `src/app/(app)/layout.tsx`, `ALLOWED_EMAIL_DOMAINS` |

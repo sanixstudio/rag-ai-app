@@ -1,6 +1,7 @@
 "use server";
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
+import { getAllowedEmailDomains } from "@/config/env";
 import { prisma } from "@/db";
 
 /**
@@ -66,4 +67,35 @@ export async function getChatSession(
   });
   if (!ourUser || session.userId !== ourUser.id) return null;
   return session;
+}
+
+/**
+ * Check if the signed-in user is allowed to use the app (internal access).
+ * When ALLOWED_EMAIL_DOMAINS is set, only users whose email domain is in that list are allowed.
+ * When unset, all signed-in users are allowed.
+ */
+export async function checkInternalAccess(clerkId: string): Promise<{
+  allowed: boolean;
+}> {
+  const allowedDomains = getAllowedEmailDomains();
+  if (allowedDomains.length === 0) return { allowed: true };
+
+  let email: string | undefined;
+  try {
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (user?.email) {
+      email = user.email;
+    } else {
+      const client = await clerkClient();
+      const u = await client.users.getUser(clerkId);
+      email = u.emailAddresses[0]?.emailAddress ?? undefined;
+    }
+  } catch {
+    return { allowed: false };
+  }
+
+  if (!email) return { allowed: false };
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain) return { allowed: false };
+  return { allowed: allowedDomains.includes(domain) };
 }

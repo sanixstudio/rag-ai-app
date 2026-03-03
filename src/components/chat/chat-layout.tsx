@@ -1,5 +1,6 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import {
   SidebarInset,
   SidebarProvider,
@@ -17,11 +18,19 @@ export function ChatLayout({ initialSessions, children }: ChatLayoutProps) {
     <SidebarProvider>
       <AppSidebar sessions={initialSessions} />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <span className="text-sm font-medium text-muted-foreground">
-            Knowledge Assistant
-          </span>
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger />
+            <span className="text-sm font-medium text-muted-foreground">
+              Internal Knowledge Base
+            </span>
+          </div>
+          <UserButton
+            afterSignOutUrl="/"
+            appearance={{
+              elements: { avatarBox: "h-8 w-8" },
+            }}
+          />
         </header>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}

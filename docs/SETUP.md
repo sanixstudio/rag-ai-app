@@ -89,13 +89,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-- **Landing**: Hero, features, and CTAs.
-- **Chat**: Use “Try without account” or sign in; ask questions. The sidebar shows “New chat” and, when signed in, chat history.
+- **Landing**: Hero and "Sign in" CTA; signed-in users are redirected to /chat.
+- **Chat**: Sign in first (required). Ask questions; the sidebar shows "New chat" and chat history.
 - **Knowledge base** (`/documents`): Upload PDF or TXT files to add them to the RAG index.
 
 ## Verifying the setup
 
-1. **Without Clerk keys**: Landing and chat load; sign-in/sign-up are skipped; chat works with anonymous sessions (no history in sidebar).
+1. **Without Clerk keys**: Chat and documents routes are protected by middleware; Clerk keys are required for the internal app to work.
 2. **With Clerk keys**: Sign up / sign in; chats are tied to your user and appear in the sidebar.
 3. **With DB + OpenAI**: Send a message and get a RAG reply (from ingested docs or uploads). If no documents are ingested, the model will say no relevant context was found.
 4. **Upload**: Go to **Knowledge base**, upload a small PDF or TXT; then ask a question about its content in the chat.

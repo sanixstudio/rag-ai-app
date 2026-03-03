@@ -94,7 +94,7 @@ File (PDF/TXT) → extract text (unpdf / UTF-8)
 
 ### Chat session and history
 
-- **Anonymous**: `ChatSession.userId = null`; session is created and messages stored, but not tied to a user. List in sidebar is empty for anonymous users.
+- **Auth**: All app usage (chat, documents) requires sign-in. Optional `ALLOWED_EMAIL_DOMAINS` restricts access to certain email domains.
 - **Signed-in**: `ChatSession.userId` set to internal `User.id` (from Clerk via `getOrCreateUserByClerk`). Sidebar lists sessions for that user; they persist across visits.
 
 ---
@@ -134,7 +134,7 @@ src/
 │   ├── chat/           # layout (sidebar + sessions), page (new chat), [id] (thread)
 │   ├── documents/      # Upload page
 │   └── sign-in, sign-up/  # Clerk routes
-└── middleware.ts       # Clerk; public routes: /, /chat, /documents, sign-in/up
+└── middleware.ts       # Clerk; public: /, sign-in/up; protected: /chat, /documents, /api/*
 ```
 
 - **config**: Single source of truth for env and RAG/chunk/upload constants.
@@ -163,6 +163,6 @@ src/
 - **Secrets**: Only on server; read via `config/env.ts` (e.g. `getOpenAiApiKey()`, `getDatabaseUrl()`).
 - **Input**: Validated with Zod in actions; file type and size enforced in `uploadDocument`.
 - **SQL**: Parameterized queries for vector and document IDs; no string interpolation of user input.
-- **Auth**: Clerk middleware protects non-public routes; session resolution uses Clerk id and internal User id.
+- **Auth**: Clerk middleware protects chat, documents, and API; only / and sign-in/up are public. Optional allowlist by email domain in app layout.
 
 For more on deployment and production hardening, see [DEPLOYMENT.md](./DEPLOYMENT.md).

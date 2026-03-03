@@ -35,3 +35,13 @@ export function getClerkPublishableKey(): string | undefined {
 export function getClerkSecretKey(): string | undefined {
   return getOptionalEnv("CLERK_SECRET_KEY");
 }
+
+/**
+ * Comma-separated list of allowed email domains for internal access (e.g. "company.com,partner.org").
+ * When set, only users whose email domain is in this list can use the app; others are restricted.
+ */
+export function getAllowedEmailDomains(): string[] {
+  const raw = getOptionalEnv("ALLOWED_EMAIL_DOMAINS");
+  if (!raw) return [];
+  return raw.split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
+}

@@ -158,7 +158,7 @@ To avoid abuse of chat and upload:
 2. In middleware or inside the Server Action, check count and return an error or redirect if over limit.
 3. Apply limits per action (e.g. N messages per minute per user, M uploads per hour).
 
-Implementation details depend on your chosen store and auth (e.g. Clerk user id vs. IP for anonymous users).
+Implementation details depend on your chosen store and auth (e.g. Clerk user id for internal users).
 
 ---
 

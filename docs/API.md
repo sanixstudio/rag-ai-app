@@ -92,6 +92,24 @@ const [state, formAction] = useActionState(async (_, formData) => uploadDocument
 // Form: <form action={formAction}> with <input type="file" name="file" accept=".pdf,.txt" />
 ```
 
+#### `listDocuments()`
+
+Lists all documents in the knowledge base. Requires an authenticated user; returns an empty array if not signed in.
+
+**Location:** `src/actions/documents.ts`
+
+**Returns:** `Promise<DocumentListItem[]>` with `{ id, title, createdAt, chunkCount }`, ordered by `createdAt` descending.
+
+---
+
+#### `deleteDocument(documentId: string)`
+
+Deletes a document and its embeddings (cascade). Requires an authenticated user.
+
+**Location:** `src/actions/documents.ts`
+
+**Returns:** `Promise<{ success: boolean; error?: string }>`. On failure, `error` is a user-facing string.
+
 ---
 
 ### Session
@@ -108,7 +126,7 @@ Ensures an internal `User` row exists for the given Clerk user id; creates one i
 
 #### `getChatSessions(userId: string | null)`
 
-Lists chat sessions for a user. For anonymous users (`userId === null`) returns an empty array.
+Lists chat sessions for the signed-in user. Used by the app layout for the sidebar.
 
 **Location:** `src/actions/session.ts`
 
@@ -118,7 +136,7 @@ Lists chat sessions for a user. For anonymous users (`userId === null`) returns 
 
 #### `getChatSession(sessionId: string, clerkIdOrUserId: string | null)`
 
-Fetches a single chat session with all messages. Respects ownership: anonymous sessions are visible to anyone; sessions with a userId are visible only to that user (resolved from Clerk id or internal User id).
+Fetches a single chat session with all messages. Respects ownership: sessions with a userId are visible only to that user (resolved from Clerk id or internal User id).
 
 **Location:** `src/actions/session.ts`
 

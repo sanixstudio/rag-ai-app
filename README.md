@@ -1,14 +1,16 @@
-# RAG AI Chatbot — Production-Ready Knowledge Assistant
+# Internal Knowledge Base — RAG AI App
 
-A production-ready RAG (Retrieval-Augmented Generation) AI chatbot that answers questions using your internal knowledge base. Built with Next.js (App Router), OpenAI, Neon PostgreSQL (pgvector), Clerk, and ShadCN UI.
+A production-ready **internal-only** RAG app: upload documents to a shared knowledge base and ask questions with answers grounded in your docs. Built with Next.js (App Router), OpenAI, Neon PostgreSQL (pgvector), Clerk, and ShadCN UI.
 
 ## Features
 
-- **Semantic search** over internal documents via vector embeddings (OpenAI + pgvector)
-- **Grounded answers** — responses cite your knowledge base; no hallucination from external web
-- **Clerk authentication** — signed-in users get persisted chat history; anonymous users can try without account (session-only)
+- **Internal-only access** — sign-in required for chat and knowledge base; no anonymous use. Optional allowlist by email domain (`ALLOWED_EMAIL_DOMAINS`) to restrict to your organization.
+- **Knowledge base** — upload PDF/TXT, list and delete documents; chunked and embedded for semantic search.
+- **Semantic search** — vector embeddings (OpenAI + pgvector) over your docs.
+- **Streaming chat** — ask questions; answers stream in and cite the knowledge base.
+- **Clerk authentication** — sign-in/sign-out, user menu in app header; chat history per user.
 - **Light/dark theme** with ShadCN UI
-- **Server Actions** for embedding, retrieval, and chat (no OpenAI calls on the client)
+- **Server Actions** for upload, list, delete, and API route for streaming chat
 - **Zod** validation and type-safe forms
 
 ## Tech Stack
@@ -64,7 +66,8 @@ cp .env.example .env
 
 - **DATABASE_URL** — Neon connection string (with `?sslmode=require` for Neon).
 - **OPENAI_API_KEY** — OpenAI API key (server-side only).
-- **NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY** / **CLERK_SECRET_KEY** — from Clerk dashboard.
+- **NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY** / **CLERK_SECRET_KEY** — from Clerk dashboard (required for this app; chat and documents are gated).
+- **ALLOWED_EMAIL_DOMAINS** (optional) — comma-separated domains (e.g. `company.com`) so only those users can access the app after sign-in.
 
 ### 3. Database and pgvector
 
@@ -173,7 +176,7 @@ All OpenAI and DB access are server-side only.
 ## Security and practices
 
 - No OpenAI or DB credentials on the client; all in Server Actions.
-- Clerk middleware protects routes you mark non-public (see `src/middleware.ts`).
+- Clerk middleware protects `/chat`, `/documents`, and `/api/*`; only `/` and sign-in/up are public (see `src/middleware.ts`).
 - Inputs validated with Zod; raw SQL uses parameterized queries for embeddings.
 - Env is validated in `config/env.ts`; never read secrets from client bundles.
 
