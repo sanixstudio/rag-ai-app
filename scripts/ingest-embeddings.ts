@@ -18,16 +18,15 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import OpenAI from "openai";
 import { nanoid } from "nanoid";
+import { RAG_CONFIG } from "../src/config/rag";
 import { chunkText } from "../src/lib/chunking";
-
-const EMBEDDING_MODEL = "text-embedding-3-small";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
   const response = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: texts.map((t) => t.slice(0, 8191)),
+    model: RAG_CONFIG.embeddingModel,
+    input: texts.map((t) => t.slice(0, RAG_CONFIG.embeddingInputLimit)),
   });
   const sorted = response.data.sort((a, b) => a.index - b.index);
   return sorted.map((d) => d.embedding);

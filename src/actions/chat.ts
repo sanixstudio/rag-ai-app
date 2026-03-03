@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { sendMessageSchema } from "@/lib/validations";
 import { generateRagResponse } from "@/ai/chat";
 import { prisma } from "@/db";
+import { ERROR_MESSAGES } from "@/lib/errors";
+import { sendMessageSchema } from "@/lib/validations";
 import { getOrCreateUserByClerk } from "./session";
 
 /**
@@ -86,7 +87,7 @@ export async function sendMessage(formData: FormData) {
     console.error("sendMessage error:", err);
     return {
       success: false,
-      error: { content: ["Failed to get a response. Please try again."] },
+      error: { content: [ERROR_MESSAGES.chat.generic] },
       sessionId: undefined,
       message: undefined,
     };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** Schema for chat message form (content + optional sessionId). */
 export const sendMessageSchema = z.object({
   content: z
     .string()
@@ -13,6 +14,7 @@ export const sendMessageSchema = z.object({
 
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 
+/** Schema for creating a chat session (optional title). */
 export const createSessionSchema = z.object({
   title: z.string().max(200).optional(),
 });

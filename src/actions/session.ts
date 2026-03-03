@@ -4,8 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/db";
 
 /**
- * Get or create a User record from the current Clerk user.
- * Returns null if not signed in.
+ * Get or create a User record from the Clerk id. Used to link Clerk users to internal User rows.
  */
 export async function getOrCreateUserByClerk(clerkId: string) {
   const existing = await prisma.user.findUnique({

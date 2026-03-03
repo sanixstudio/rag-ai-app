@@ -1,18 +1,16 @@
-/**
- * Text chunking for RAG ingestion.
- * Used by upload action and ingest script.
- */
-
-const DEFAULT_CHUNK_SIZE = 800;
-const DEFAULT_CHUNK_OVERLAP = 100;
+import { CHUNK_CONFIG } from "@/config/rag";
 
 /**
  * Split text into overlapping chunks for embedding.
+ * Used by upload action and ingest script.
+ * @param text - Full document text
+ * @param chunkSize - Target size in characters (default from config)
+ * @param overlap - Overlap between consecutive chunks (default from config)
  */
 export function chunkText(
   text: string,
-  chunkSize: number = DEFAULT_CHUNK_SIZE,
-  overlap: number = DEFAULT_CHUNK_OVERLAP
+  chunkSize: number = CHUNK_CONFIG.chunkSize,
+  overlap: number = CHUNK_CONFIG.chunkOverlap
 ): string[] {
   const chunks: string[] = [];
   let start = 0;

@@ -95,18 +95,25 @@ Open [http://localhost:3000](http://localhost:3000). You can sign up/sign in (Cl
 
 ```
 src/
-├── actions/          # Server Actions (chat, session)
+├── config/           # Env validation (env.ts), RAG constants (rag.ts)
+├── actions/          # Server Actions (chat, documents, session)
 ├── ai/               # RAG: embeddings, retrieval, chat
-├── components/      # UI (ShadCN + chat, theme)
-├── db/               # Prisma client + vector queries
-├── app/              # App Router (landing, chat, layout)
-├── lib/              # Utils, validation (Zod)
+├── components/       # UI (ShadCN, chat sidebar, theme)
+├── db/               # Prisma client + vector similarity (vectors.ts)
+├── app/              # App Router (landing, chat, documents, auth)
+├── lib/              # Utils, validation (Zod), errors (user-facing copy)
 prisma/
 ├── schema.prisma     # Models (vector column in migration only)
 ├── migrations/       # Init + pgvector migration
 scripts/
 └── ingest-embeddings.ts  # Example ingestion
 ```
+
+## Configuration
+
+- **Environment** — `src/config/env.ts` validates required vars (`DATABASE_URL`, `OPENAI_API_KEY`) when used; optional Clerk keys for auth.
+- **RAG tuning** — `src/config/rag.ts` holds embedding/chat model names, `topK`, `minSimilarity`, chunk size/overlap, and upload limits. Change in one place to tune behavior.
+- **Errors** — `src/lib/errors.ts` centralizes user-facing error messages for actions.
 
 ## Database schema (summary)
 
@@ -155,6 +162,15 @@ All OpenAI and DB access are server-side only.
 - No OpenAI or DB credentials on the client; all in Server Actions.
 - Clerk middleware protects routes you mark non-public (see `src/middleware.ts`).
 - Inputs validated with Zod; raw SQL uses parameterized queries for embeddings.
+- Env is validated in `config/env.ts`; never read secrets from client bundles.
+
+## Production checklist
+
+- [ ] Set all required env vars in Vercel (and optionally use Vercel env for previews).
+- [ ] Run `npm run db:migrate` against production DB before first deploy.
+- [ ] Add rate limiting for chat and upload actions (e.g. Upstash Redis).
+- [ ] Configure Clerk redirect URLs and (if needed) webhooks.
+- [ ] Run `npm run lint` and `npm run typecheck` in CI.
 
 ## License
 

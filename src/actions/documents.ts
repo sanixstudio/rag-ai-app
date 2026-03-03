@@ -2,17 +2,27 @@
 
 import { getDocumentProxy, extractText as unpdfExtractText } from "unpdf";
 import { nanoid } from "nanoid";
-import { chunkText } from "@/lib/chunking";
+import { UPLOAD_CONFIG } from "@/config/rag";
 import { embedTexts } from "@/ai/embeddings";
 import { prisma } from "@/db";
-
-const MAX_FILE_SIZE_MB = 10;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-const ALLOWED_TYPES = ["application/pdf", "text/plain"] as const;
+import { chunkText } from "@/lib/chunking";
+import { ERROR_MESSAGES } from "@/lib/errors";
 
 export type UploadResult =
   | { success: true; documentId: string; title: string; chunks: number }
   | { success: false; error: string };
+
+const ALLOWED_EXTENSIONS = [".pdf", ".txt"] as const;
+
+function isAllowedFile(file: File): boolean {
+  const byMime = UPLOAD_CONFIG.allowedMimeTypes.includes(
+    file.type as (typeof UPLOAD_CONFIG.allowedMimeTypes)[number]
+  );
+  const byExt = ALLOWED_EXTENSIONS.some((ext) =>
+    file.name.toLowerCase().endsWith(ext)
+  );
+  return byMime || byExt;
+}
 
 /**
  * Extract text from an uploaded file (PDF or plain text).
@@ -40,28 +50,28 @@ async function extractTextFromFile(file: File): Promise<string> {
 export async function uploadDocument(formData: FormData): Promise<UploadResult> {
   const file = formData.get("file") as File | null;
   if (!file || !(file instanceof File)) {
-    return { success: false, error: "No file provided." };
+    return { success: false, error: ERROR_MESSAGES.upload.noFile };
   }
 
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return { success: false, error: `File too large. Max ${MAX_FILE_SIZE_MB} MB.` };
+  if (file.size > UPLOAD_CONFIG.maxFileSizeBytes) {
+    const maxMb = UPLOAD_CONFIG.maxFileSizeBytes / (1024 * 1024);
+    return { success: false, error: ERROR_MESSAGES.upload.fileTooLarge(maxMb) };
   }
 
-  const allowed = ALLOWED_TYPES.some((t) => file.type === t) || file.name.endsWith(".txt") || file.name.toLowerCase().endsWith(".pdf");
-  if (!allowed) {
-    return { success: false, error: "Only PDF and TXT files are supported." };
+  if (!isAllowedFile(file)) {
+    return { success: false, error: ERROR_MESSAGES.upload.unsupportedType };
   }
 
   try {
     const text = await extractTextFromFile(file);
     if (!text.trim()) {
-      return { success: false, error: "File contains no extractable text." };
+      return { success: false, error: ERROR_MESSAGES.upload.noText };
     }
 
     const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
     const chunks = chunkText(text);
     if (chunks.length === 0) {
-      return { success: false, error: "No text chunks could be created." };
+      return { success: false, error: ERROR_MESSAGES.upload.noChunks };
     }
 
     const embeddings = await embedTexts(chunks);

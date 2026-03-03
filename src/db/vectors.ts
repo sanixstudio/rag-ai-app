@@ -3,9 +3,10 @@
  * Embedding column is not in Prisma schema; it is added by migration.
  */
 
+import { RAG_CONFIG } from "@/config/rag";
 import { prisma } from "./index";
 
-const EMBEDDING_DIMENSION = 1536;
+const EMBEDDING_DIMENSION = RAG_CONFIG.embeddingDimension;
 
 export interface SimilarChunk {
   id: string;
