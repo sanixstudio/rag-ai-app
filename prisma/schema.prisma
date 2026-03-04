@@ -20,16 +20,19 @@ model User {
 }
 
 model Document {
-  id         String      @id @default(cuid())
-  title      String
-  content    String      @db.Text
-  sourceUrl  String?
-  metadata   Json?
-  tags       String[]    @default([])
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  embeddings Embedding[]
+  id              String      @id @default(cuid())
+  organizationId  String      @default("org_legacy") // Clerk org id (tenant); default for backfill only
+  title           String
+  content         String      @db.Text
+  sourceUrl       String?
+  metadata        Json?
+  tags            String[]    @default([])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  embeddings      Embedding[]
 
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
   @@index([createdAt])
 }
 
@@ -46,14 +49,18 @@ model Embedding {
 }
 
 model ChatSession {
-  id        String    @id @default(cuid())
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  title     String    @default("New chat")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  messages  Message[]
+  id              String    @id @default(cuid())
+  organizationId  String    @default("org_legacy") // Clerk org id (tenant); default for backfill only
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  title           String    @default("New chat")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
 
+  @@index([organizationId])
+  @@index([organizationId, userId])
+  @@index([organizationId, updatedAt])
   @@index([userId])
   @@index([updatedAt])
 }

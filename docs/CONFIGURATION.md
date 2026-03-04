@@ -27,8 +27,12 @@ Clerk uses defaults if these are not set. Override only if you need custom paths
 
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` — Sign-in path (default: `/sign-in`).
 - `NEXT_PUBLIC_CLERK_SIGN_UP_URL` — Sign-up path (default: `/sign-up`).
-- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` — Where to send after sign-in (default: `/`). Set to `/chat` to send users straight to chat.
+- `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` — Where to send after sign-in (default: `/`). For multi-tenant SaaS, set to `/chat` or `/workspace` so users land in the app or on workspace creation.
 - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` — Where to send after sign-up (default: `/`).
+
+### Multi-tenant (Clerk Organizations)
+
+The app uses **Clerk Organizations** as workspaces (one org = one tenant). Each workspace has its own documents and chat sessions. Users must create or join an organization before using chat or documents. See [CLERK_MULTI_TENANT_SETUP.md](./CLERK_MULTI_TENANT_SETUP.md) for Clerk Dashboard setup (enable Organizations, redirects, optional org roles).
 
 ### Access in code
 

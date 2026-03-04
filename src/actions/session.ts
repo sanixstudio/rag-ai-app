@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getAllowedEmailDomains } from "@/config/env";
+import { requireOrganizationId } from "@/lib/tenant";
 import { prisma } from "@/db";
 
 /**
@@ -32,35 +33,33 @@ export async function getOrCreateUserByClerk(clerkId: string) {
 }
 
 /**
- * List chat sessions for the current user (or by session ids for anonymous).
+ * List chat sessions for the current user in the given organization (tenant).
  */
-export async function getChatSessions(userId: string | null) {
-  if (userId) {
-    return prisma.chatSession.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
-    });
-  }
-  return [];
+export async function getChatSessions(userId: string | null, organizationId: string) {
+  if (!userId) return [];
+  return prisma.chatSession.findMany({
+    where: { userId, organizationId },
+    orderBy: { updatedAt: "desc" },
+    include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
+  });
 }
 
 /**
  * Get a single chat session with messages (for viewing history).
- * @param sessionId - Chat session id
- * @param clerkIdOrUserId - Clerk user id (we resolve to internal User id) or internal userId; null for anonymous
+ * Ensures the session belongs to the given organization (tenant).
  */
 export async function getChatSession(
   sessionId: string,
-  clerkIdOrUserId: string | null
+  clerkIdOrUserId: string | null,
+  organizationId: string
 ) {
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
     include: { messages: { orderBy: { createdAt: "asc" } } },
   });
-  if (!session) return null;
-  if (!session.userId) return session; // Anonymous session: allow anyone
-  if (!clerkIdOrUserId) return null; // Session belongs to a user, viewer is anonymous
+  if (!session || session.organizationId !== organizationId) return null;
+  if (!session.userId) return session; // Anonymous session: allow anyone in org
+  if (!clerkIdOrUserId) return null;
   const ourUser = await prisma.user.findFirst({
     where: {
       OR: [{ clerkId: clerkIdOrUserId }, { id: clerkIdOrUserId }],
@@ -81,9 +80,13 @@ export async function updateSessionTitle(
   if (!clerkId) return { success: false, error: "Sign in to rename." };
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
-    select: { userId: true },
+    select: { userId: true, organizationId: true },
   });
   if (!session) return { success: false, error: "Chat not found." };
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId || session.organizationId !== organizationId) {
+    return { success: false, error: "Not allowed." };
+  }
   if (session.userId) {
     const user = await getOrCreateUserByClerk(clerkId);
     if (!user || session.userId !== user.id)
@@ -114,10 +117,14 @@ export async function deleteChatSession(sessionId: string): Promise<{
 
   const session = await prisma.chatSession.findUnique({
     where: { id: sessionId },
-    select: { id: true, userId: true },
+    select: { id: true, userId: true, organizationId: true },
   });
   if (!session) {
     return { success: false, error: "Chat not found." };
+  }
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId || session.organizationId !== organizationId) {
+    return { success: false, error: "Not allowed." };
   }
   if (session.userId) {
     const user = await prisma.user.findFirst({
@@ -174,10 +181,10 @@ export async function checkInternalAccess(clerkId: string): Promise<{
 }
 
 /**
- * Simple analytics counts for the internal app (messages, documents, feedback).
- * Requires auth.
+ * Simple analytics counts for the current organization (tenant).
+ * Requires auth and active org.
  */
-export async function getAnalyticsCounts(): Promise<{
+export async function getAnalyticsCounts(organizationId: string): Promise<{
   messageCount: number;
   documentCount: number;
   embeddingCount: number;
@@ -187,14 +194,36 @@ export async function getAnalyticsCounts(): Promise<{
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) return null;
-    const [messageCount, documentCount, embeddingCount, feedbackUp, feedbackDown] =
-      await Promise.all([
-        prisma.message.count(),
-        prisma.document.count(),
-        prisma.embedding.count(),
-        prisma.message.count({ where: { role: "assistant", feedback: 1 } }),
-        prisma.message.count({ where: { role: "assistant", feedback: -1 } }),
-      ]);
+    const [documentCount, embeddingCount, sessionIds] = await Promise.all([
+      prisma.document.count({ where: { organizationId } }),
+      prisma.embedding.count({
+        where: { document: { organizationId } },
+      }),
+      prisma.chatSession.findMany({
+        where: { organizationId },
+        select: { id: true },
+      }),
+    ]);
+    const sessionIdList = sessionIds.map((s: { id: string }) => s.id);
+    const [messageCount, feedbackUp, feedbackDown] = await Promise.all([
+      prisma.message.count({
+        where: { sessionId: { in: sessionIdList } },
+      }),
+      prisma.message.count({
+        where: {
+          sessionId: { in: sessionIdList },
+          role: "assistant",
+          feedback: 1,
+        },
+      }),
+      prisma.message.count({
+        where: {
+          sessionId: { in: sessionIdList },
+          role: "assistant",
+          feedback: -1,
+        },
+      }),
+    ]);
     return {
       messageCount,
       documentCount,

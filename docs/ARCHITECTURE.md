@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the high-level architecture, data flow, and design decisions of the RAG AI Chatbot.
+This document describes the high-level architecture, data flow, and design decisions of the RAG AI Chatbot. For a full **system design** (context diagram, multi-tenancy, component breakdown, key flows, and trade-offs), see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md).
 
 ## Overview
 

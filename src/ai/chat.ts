@@ -11,16 +11,17 @@ When you do have relevant context, cite it and be concise and accurate.`;
 /**
  * Generate a RAG response: retrieve context, then chat completion with context in system prompt.
  * @param userMessage - User query
+ * @param options.organizationId - Required for tenant-scoped retrieval
  * @param options.topK - Number of chunks to retrieve (default from config)
  */
 export async function generateRagResponse(
   userMessage: string,
-  options: { topK?: number; tagFilter?: string } = {}
+  options: { organizationId: string; topK?: number; tagFilter?: string }
 ): Promise<string> {
   const { context } = await retrieveContext(
     userMessage,
     options.topK ?? RAG_CONFIG.defaultTopK,
-    { tagFilter: options.tagFilter }
+    { organizationId: options.organizationId, tagFilter: options.tagFilter }
   );
   const systemContent = context
     ? `${SYSTEM_PROMPT}\n\n## Context from knowledge base\n${context}`
@@ -44,6 +45,8 @@ export async function generateRagResponse(
 }
 
 export interface RagStreamOptions {
+  /** Current workspace (tenant); required for tenant-scoped retrieval */
+  organizationId: string;
   topK?: number;
   /** Restrict to documents with this tag */
   tagFilter?: string;
@@ -62,12 +65,12 @@ export interface RagStreamOptions {
  */
 export async function* generateRagResponseStream(
   userMessage: string,
-  options: RagStreamOptions = {}
+  options: RagStreamOptions
 ): AsyncGenerator<string, string, undefined> {
   const { context, chunks } = await retrieveContext(
     userMessage,
     options.topK ?? RAG_CONFIG.defaultTopK,
-    { tagFilter: options.tagFilter }
+    { organizationId: options.organizationId, tagFilter: options.tagFilter }
   );
   options.onRetrieval?.(chunks);
 

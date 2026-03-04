@@ -6,6 +6,7 @@ import { generateRagResponse } from "@/ai/chat";
 import { prisma } from "@/db";
 import { ERROR_MESSAGES } from "@/lib/errors";
 import { sendMessageSchema, feedbackSchema, messageIdSchema } from "@/lib/validations";
+import { requireOrganizationId } from "@/lib/tenant";
 import { getOrCreateUserByClerk } from "./session";
 
 /**
@@ -40,10 +41,21 @@ export async function sendMessage(formData: FormData) {
     // Auth unavailable (e.g. Clerk not configured)
   }
 
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) {
+    return {
+      success: false,
+      error: { content: ["Select or create a workspace first."] },
+      sessionId: undefined,
+      message: undefined,
+    };
+  }
+
   try {
     if (!sessionId) {
       const session = await prisma.chatSession.create({
         data: {
+          organizationId,
           userId,
           title: content.slice(0, 50) || "New chat",
         },
@@ -59,7 +71,9 @@ export async function sendMessage(formData: FormData) {
       },
     });
 
-    const assistantContent = await generateRagResponse(content);
+    const assistantContent = await generateRagResponse(content, {
+      organizationId,
+    });
 
     await prisma.message.create({
       data: {
@@ -115,10 +129,14 @@ export async function submitMessageFeedback(
     if (!clerkId) return { success: false, error: "Sign in to submit feedback." };
     const message = await prisma.message.findUnique({
       where: { id: messageIdParsed.data },
-      include: { session: true },
+      include: { session: { select: { userId: true, organizationId: true } } },
     });
     if (!message || message.role !== "assistant")
       return { success: false, error: "Message not found." };
+    const { organizationId } = await requireOrganizationId();
+    if (!organizationId || message.session.organizationId !== organizationId) {
+      return { success: false, error: "Not allowed." };
+    }
     if (message.session.userId) {
       const user = await getOrCreateUserByClerk(clerkId);
       if (!user || message.session.userId !== user.id)

@@ -9,25 +9,30 @@ export interface RetrievalResult {
 }
 
 export interface RetrieveOptions {
+  /** Current workspace (tenant); required for tenant isolation */
+  organizationId: string;
   /** Restrict retrieval to documents that have this tag */
   tagFilter?: string;
 }
 
 /**
  * RAG retrieval: embed query, find similar chunks, return formatted context.
- * Uses config for topK and minSimilarity; falls back to top chunks when all are below threshold.
- * Optional tagFilter restricts to documents that have the given tag.
+ * Scoped to the given organization (tenant). Uses config for topK and minSimilarity.
  */
 export async function retrieveContext(
   query: string,
   topK: number = RAG_CONFIG.defaultTopK,
-  options: RetrieveOptions = {}
+  options: RetrieveOptions
 ): Promise<RetrievalResult> {
+  const { organizationId, tagFilter } = options;
   const queryEmbedding = await embedText(query);
   let filterDocumentIds: string[] | undefined;
-  if (options.tagFilter?.trim()) {
+  if (tagFilter?.trim()) {
     const docs = await prisma.document.findMany({
-      where: { tags: { has: options.tagFilter.trim() } },
+      where: {
+        organizationId,
+        tags: { has: tagFilter.trim() },
+      },
       select: { id: true },
     });
     const ids = docs.map((d: { id: string }) => d.id);
@@ -39,6 +44,7 @@ export async function retrieveContext(
   const chunks = await findSimilarChunks(
     queryEmbedding,
     topK,
+    organizationId,
     filterDocumentIds
   );
   const filtered = chunks.filter((c) => c.similarity >= RAG_CONFIG.minSimilarity);

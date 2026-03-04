@@ -4,6 +4,7 @@ import { generateRagResponseStream } from "@/ai/chat";
 import type { SimilarChunk } from "@/db/vectors";
 import { prisma } from "@/db";
 import { getOrCreateUserByClerk, getChatSession } from "@/actions/session";
+import { requireOrganizationId } from "@/lib/tenant";
 import { sendMessageSchema } from "@/lib/validations";
 import { ERROR_MESSAGES } from "@/lib/errors";
 
@@ -40,11 +41,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) {
+    return NextResponse.json(
+      { error: "Select or create a workspace first." },
+      { status: 403 }
+    );
+  }
+
   const user = await getOrCreateUserByClerk(clerkId);
   const userId = user?.id ?? null;
 
   if (existingSessionId) {
-    const session = await getChatSession(existingSessionId, clerkId);
+    const session = await getChatSession(existingSessionId, clerkId, organizationId);
     if (!session) {
       return NextResponse.json(
         { error: "Chat not found or access denied." },
@@ -57,6 +66,7 @@ export async function POST(request: Request) {
     if (!sessionId) {
       const session = await prisma.chatSession.create({
         data: {
+          organizationId,
           userId,
           title: content.slice(0, 50) || "New chat",
         },
@@ -80,6 +90,7 @@ export async function POST(request: Request) {
       async start(controller) {
         try {
           for await (const delta of generateRagResponseStream(content, {
+            organizationId,
             tagFilter: tagFilter ?? undefined,
             onRetrieval(chunks: SimilarChunk[]) {
               sourcesChunks.push(

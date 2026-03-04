@@ -9,6 +9,7 @@ import { prisma } from "@/db";
 import { chunkText } from "@/lib/chunking";
 import { ERROR_MESSAGES } from "@/lib/errors";
 import { documentIdSchema } from "@/lib/validations";
+import { requireOrganizationId } from "@/lib/tenant";
 
 export type UploadResult =
   | { success: true; documentId: string; title: string; chunks: number }
@@ -55,6 +56,10 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
   if (!userId) {
     return { success: false, error: "Sign in to upload documents." };
   }
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) {
+    return { success: false, error: "Select or create a workspace first." };
+  }
 
   const file = formData.get("file") as File | null;
   if (!file || !(file instanceof File)) {
@@ -95,6 +100,7 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
 
     const document = await prisma.document.create({
       data: {
+        organizationId,
         title,
         content: text,
         sourceUrl: null,
@@ -140,12 +146,15 @@ export type DocumentListItem = {
 };
 
 /**
- * Get distinct tags from all documents (for filter dropdowns).
+ * Get distinct tags from all documents in the current workspace (for filter dropdowns).
  */
 export async function getDocumentTags(): Promise<string[]> {
   const { userId } = await auth();
   if (!userId) return [];
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) return [];
   const docs = await prisma.document.findMany({
+    where: { organizationId },
     select: { tags: true },
   });
   const set = new Set<string>();
@@ -156,14 +165,17 @@ export async function getDocumentTags(): Promise<string[]> {
 }
 
 /**
- * List all documents in the knowledge base (for internal users).
- * Requires an authenticated user.
+ * List all documents in the current workspace (tenant).
+ * Requires an authenticated user and active org.
  */
 export async function listDocuments(): Promise<DocumentListItem[]> {
   const { userId } = await auth();
   if (!userId) return [];
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) return [];
 
   const docs = await prisma.document.findMany({
+    where: { organizationId },
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { embeddings: true } } },
   });
@@ -192,6 +204,17 @@ export async function deleteDocument(documentId: string): Promise<{
   if (!userId) {
     return { success: false, error: "Sign in to delete documents." };
   }
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) {
+    return { success: false, error: "Select a workspace first." };
+  }
+  const doc = await prisma.document.findUnique({
+    where: { id: parsed.data },
+    select: { organizationId: true },
+  });
+  if (!doc || doc.organizationId !== organizationId) {
+    return { success: false, error: "Document not found." };
+  }
   try {
     await prisma.document.delete({ where: { id: parsed.data } });
     return { success: true };
@@ -216,18 +239,24 @@ export async function reingestDocument(documentId: string): Promise<{
   if (!parsed.success) {
     return { success: false, error: "Invalid document id." };
   }
-  const id = parsed.data;
+  const docId = parsed.data;
   const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Sign in to re-index documents." };
   }
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) {
+    return { success: false, error: "Select a workspace first." };
+  }
   try {
     const doc = await prisma.document.findUnique({
-      where: { id },
+      where: { id: docId },
     });
-    if (!doc) return { success: false, error: "Document not found." };
+    if (!doc || doc.organizationId !== organizationId) {
+      return { success: false, error: "Document not found." };
+    }
 
-    await prisma.embedding.deleteMany({ where: { documentId: id } });
+    await prisma.embedding.deleteMany({ where: { documentId: docId } });
 
     const chunks = chunkText(doc.content);
     if (chunks.length === 0) {
@@ -237,12 +266,12 @@ export async function reingestDocument(documentId: string): Promise<{
     const embeddings = await embedTexts(chunks);
     for (let i = 0; i < chunks.length; i++) {
       const vectorStr = `[${embeddings[i].join(",")}]`;
-      const id = nanoid();
+      const embeddingId = nanoid();
       await prisma.$executeRawUnsafe(
         `INSERT INTO "Embedding" (id, "documentId", "chunkIndex", "chunkText", embedding, "createdAt")
          VALUES ($1, $2, $3, $4, $5::vector, NOW())`,
-        id,
-        id,
+        embeddingId,
+        docId,
         i,
         chunks[i],
         vectorStr
@@ -254,7 +283,7 @@ export async function reingestDocument(documentId: string): Promise<{
         ? { ...(doc.metadata as Record<string, unknown>), chunkCount: chunks.length }
         : { chunkCount: chunks.length };
     await prisma.document.update({
-      where: { id },
+      where: { id: docId },
       data: { updatedAt: new Date(), metadata },
     });
 

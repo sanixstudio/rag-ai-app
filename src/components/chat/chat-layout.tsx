@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import {
   SidebarInset,
   SidebarProvider,
@@ -10,10 +10,11 @@ import { AppSidebar, type ChatSessionItem } from "./app-sidebar";
 
 interface ChatLayoutProps {
   initialSessions: ChatSessionItem[];
+  organizationId: string;
   children: React.ReactNode;
 }
 
-export function ChatLayout({ initialSessions, children }: ChatLayoutProps) {
+export function ChatLayout({ initialSessions, organizationId, children }: ChatLayoutProps) {
   return (
     <SidebarProvider>
       <AppSidebar sessions={initialSessions} />
@@ -21,12 +22,18 @@ export function ChatLayout({ initialSessions, children }: ChatLayoutProps) {
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <SidebarTrigger />
-            <span className="text-sm font-medium tracking-tight text-muted-foreground">
-              Internal Knowledge Base
-            </span>
+            <OrganizationSwitcher
+              hidePersonal
+              afterCreateOrganizationUrl="/chat"
+              afterSelectOrganizationUrl="/chat"
+              appearance={{
+                elements: {
+                  rootBox: "flex items-center",
+                },
+              }}
+            />
           </div>
           <UserButton
-            afterSignOutUrl="/"
             appearance={{
               elements: { avatarBox: "h-8 w-8 rounded-xl" },
             }}

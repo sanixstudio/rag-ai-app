@@ -19,15 +19,17 @@ export interface SimilarChunk {
 
 /**
  * Find the top-k embedding chunks most similar to the query vector (cosine similarity).
- * Optionally restrict to documents whose id is in filterDocumentIds (e.g. by tag).
+ * Always scoped to the given organization (tenant). Optionally restrict to document ids (e.g. by tag).
  *
  * @param queryEmbedding - number[] of length 1536
  * @param topK - Max number of chunks to return
+ * @param organizationId - Tenant id (Clerk org id); required for isolation
  * @param filterDocumentIds - Optional list of document IDs to restrict search
  */
 export async function findSimilarChunks(
   queryEmbedding: number[],
   topK: number = 5,
+  organizationId: string,
   filterDocumentIds?: string[]
 ): Promise<SimilarChunk[]> {
   if (queryEmbedding.length !== EMBEDDING_DIMENSION) {
@@ -43,12 +45,13 @@ export async function findSimilarChunks(
              1 - (e.embedding <=> $1::vector) AS similarity
       FROM "Embedding" e
       JOIN "Document" d ON d.id = e."documentId"
-      WHERE e.embedding IS NOT NULL
+      WHERE e.embedding IS NOT NULL AND d."organizationId" = $3
       ORDER BY e.embedding <=> $1::vector
       LIMIT $2
       `,
       vectorStr,
-      topK
+      topK,
+      organizationId
     );
     return result;
   }
@@ -58,12 +61,13 @@ export async function findSimilarChunks(
            1 - (e.embedding <=> $1::vector) AS similarity
     FROM "Embedding" e
     JOIN "Document" d ON d.id = e."documentId"
-    WHERE e.embedding IS NOT NULL AND e."documentId" = ANY($3::text[])
+    WHERE e.embedding IS NOT NULL AND d."organizationId" = $3 AND e."documentId" = ANY($4::text[])
     ORDER BY e.embedding <=> $1::vector
     LIMIT $2
     `,
     vectorStr,
     topK,
+    organizationId,
     filterDocumentIds
   );
   return result;

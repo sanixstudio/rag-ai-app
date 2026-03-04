@@ -1,13 +1,15 @@
 import { getAnalyticsCounts } from "@/actions/session";
+import { requireOrganizationId } from "@/lib/tenant";
 import { MessageSquare, FileText, Layers, ThumbsUp, ThumbsDown } from "lucide-react";
 
 export const metadata = {
-  title: "Analytics | Internal Knowledge Base",
-  description: "Usage and feedback analytics.",
+  title: "Analytics | Knowledge Base",
+  description: "Usage and feedback analytics for this workspace.",
 };
 
 export default async function AnalyticsPage() {
-  const counts = await getAnalyticsCounts();
+  const { organizationId } = await requireOrganizationId();
+  const counts = organizationId ? await getAnalyticsCounts(organizationId) : null;
 
   if (!counts) {
     return (

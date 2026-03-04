@@ -62,6 +62,7 @@ async function main() {
 
     const document = await prisma.document.create({
       data: {
+        organizationId: process.env.INGEST_ORGANIZATION_ID ?? "org_legacy",
         title: doc.title,
         content: doc.content,
         sourceUrl: null,

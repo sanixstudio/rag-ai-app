@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getChatSession } from "@/actions/session";
 import { getDocumentTags } from "@/actions/documents";
+import { requireOrganizationId } from "@/lib/tenant";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 interface PageProps {
@@ -11,8 +12,10 @@ interface PageProps {
 export default async function ChatSessionPage({ params }: PageProps) {
   const { id } = await params;
   const { userId: clerkId } = await auth();
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) notFound();
   const [session, initialTags] = await Promise.all([
-    getChatSession(id, clerkId ?? null),
+    getChatSession(id, clerkId ?? null, organizationId),
     getDocumentTags(),
   ]);
   if (!session) notFound();
