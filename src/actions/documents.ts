@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { getDocumentProxy, extractText as unpdfExtractText } from "unpdf";
 import { nanoid } from "nanoid";
@@ -123,6 +124,7 @@ export async function uploadDocument(formData: FormData): Promise<UploadResult> 
       );
     }
 
+    revalidatePath("/documents");
     return {
       success: true,
       documentId: document.id,

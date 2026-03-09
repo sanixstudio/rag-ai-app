@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { FileText, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,11 @@ interface DocumentListProps {
 
 export function DocumentList({ initialDocuments }: DocumentListProps) {
   const [documents, setDocuments] = useState(initialDocuments);
+
+  // Sync from server when parent re-renders with fresh data (e.g. after upload + router.refresh())
+  useEffect(() => {
+    setDocuments(initialDocuments);
+  }, [initialDocuments]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reingestingId, setReingestingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");

@@ -298,6 +298,15 @@ export function ChatPanel({
       </ScrollArea>
 
       <div className="border-t border-border/50 bg-background/95 backdrop-blur-sm p-4">
+        {isKnowledgeBaseEmpty && (
+          <div className="mx-auto max-w-2xl mb-3 flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            <Upload className="h-4 w-4 shrink-0" aria-hidden />
+            <span>Add a file to your knowledge base to get answers from your content.</span>
+            <Button variant="link" size="sm" asChild className="h-auto p-0 text-primary font-medium shrink-0">
+              <Link href="/documents">Add file</Link>
+            </Button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-3">
           {initialTags.length > 0 && (
             <div className="flex items-center gap-2">

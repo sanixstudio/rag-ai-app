@@ -1,12 +1,14 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { uploadDocument } from "@/actions/documents";
 
 export function DocumentUploadForm() {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(
@@ -19,10 +21,11 @@ export function DocumentUploadForm() {
     if (state.success) {
       toast.success(`"${state.title}" added (${state.chunks} chunks).`);
       queueMicrotask(() => setSelectedFile(null));
+      router.refresh();
     } else {
       toast.error(state.error);
     }
-  }, [state]);
+  }, [state, router]);
 
   const formKey = state?.success ? state.documentId : "upload";
 
