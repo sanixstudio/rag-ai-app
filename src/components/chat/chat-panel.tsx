@@ -211,43 +211,52 @@ export function ChatPanel({
             >
               <div
                 className={cn(
-                  "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm transition-shadow",
+                  "max-w-[85%] rounded-2xl shadow-sm transition-shadow",
                   m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border/50 shadow-sm"
+                    ? "bg-primary text-primary-foreground px-4 py-3"
+                    : "bg-card border border-border/50 px-5 py-4"
                 )}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                <p
+                  className={cn(
+                    "whitespace-pre-wrap",
+                    m.role === "user"
+                      ? "text-sm leading-relaxed"
+                      : "text-[15px] leading-7 text-foreground tracking-[0.01em] max-w-[70ch]"
+                  )}
+                >
+                  {m.content}
+                </p>
                 {m.role === "assistant" && (
                   <>
                     {m.sources && m.sources.length > 0 ? (
-                      <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">Sources</p>
-                        <ul className="text-xs text-muted-foreground space-y-1">
+                      <div className="mt-4 pt-4 border-t border-border/50 space-y-2.5">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sources</p>
+                        <ul className="text-sm text-muted-foreground space-y-1.5 leading-snug">
                           {m.sources.map((s, i) => (
                             <li key={i}>
-                              <span className="font-medium">{s.documentTitle}</span>
+                              <span className="font-medium text-foreground/90">{s.documentTitle}</span>
                               {s.chunkSnippet && (
-                                <span className="block mt-0.5 opacity-90 truncate max-w-full">
+                                <span className="block mt-0.5 text-muted-foreground truncate max-w-full">
                                   {s.chunkSnippet}
                                 </span>
                               )}
                             </li>
                           ))}
                         </ul>
-                        <details className="group mt-2">
-                          <summary className="flex items-center gap-1 text-xs cursor-pointer list-none text-muted-foreground hover:text-foreground">
-                            <ChevronRight className="h-3 w-3 group-open:rotate-90 transition-transform" />
+                        <details className="group mt-2.5">
+                          <summary className="flex items-center gap-1.5 text-sm cursor-pointer list-none text-muted-foreground hover:text-foreground font-medium">
+                            <ChevronRight className="h-3.5 w-3.5 group-open:rotate-90 transition-transform shrink-0" />
                             Why this answer?
                           </summary>
-                          <ul className="mt-2 pl-4 space-y-2 text-xs text-muted-foreground">
+                          <ul className="mt-2.5 pl-4 space-y-2 text-sm text-muted-foreground leading-snug">
                             {m.sources.map((s, i) => (
                               <li key={i} className="flex gap-2">
-                                <FileText className="h-3 w-3 shrink-0 mt-0.5" />
+                                <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5 text-muted-foreground/80" />
                                 <span>
-                                  <strong>{s.documentTitle}</strong>
+                                  <strong className="text-foreground/90">{s.documentTitle}</strong>
                                   {s.chunkSnippet && (
-                                    <span className="block mt-0.5 italic">&quot;{s.chunkSnippet}&quot;</span>
+                                    <span className="block mt-0.5 italic text-muted-foreground">&quot;{s.chunkSnippet}&quot;</span>
                                   )}
                                 </span>
                               </li>
@@ -256,7 +265,7 @@ export function ChatPanel({
                         </details>
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-muted-foreground italic">
+                      <p className="mt-2 text-sm text-muted-foreground italic">
                         No matching documents were used for this answer.
                       </p>
                     )}
@@ -300,16 +309,18 @@ export function ChatPanel({
           )}
           {showThinking && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-4 py-3 flex items-center gap-2.5 shadow-sm">
+              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-5 py-4 flex items-center gap-2.5 shadow-sm">
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">Thinking…</span>
+                <span className="text-[15px] text-muted-foreground">Thinking…</span>
               </div>
             </div>
           )}
           {streamingContent && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-4 py-3 shadow-sm">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{streamingContent}</p>
+              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-5 py-4 shadow-sm">
+                <p className="text-[15px] leading-7 text-foreground tracking-[0.01em] max-w-[70ch] whitespace-pre-wrap">
+                  {streamingContent}
+                </p>
               </div>
             </div>
           )}
