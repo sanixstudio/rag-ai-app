@@ -20,11 +20,11 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-10 border-b border-border/50 bg-background/95 backdrop-blur-xl transition-colors">
         <div className={`mx-auto ${CONTENT_MAX} flex h-16 items-center justify-between px-6 sm:px-8 lg:px-10`}>
           <Link
             href="/"
-            className="flex items-center gap-3 font-semibold text-foreground hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 font-semibold text-foreground hover:opacity-90 transition-opacity"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <BookOpen className="h-5 w-5" />
@@ -48,11 +48,10 @@ export default async function HomePage() {
               Your knowledge base, one question away
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Sign in to ask questions grounded in your company docs. Access is
-              restricted to internal users only.
+              Sign in to ask questions grounded in your company docs. Access is restricted to internal users only.
             </p>
             <div className="mt-10">
-              <Button asChild size="lg" className="rounded-xl px-8 h-12 text-base font-medium shadow-md hover:shadow-lg transition-shadow">
+              <Button asChild size="lg" className="rounded-xl px-8 h-12 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200">
                 <Link href="/sign-in" className="inline-flex items-center justify-center gap-2">
                   Sign in to continue
                   <ArrowRight className="h-4 w-4" />
@@ -123,8 +122,8 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <li className="group rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-border">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+    <li className="group rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-border/80">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary/15">
         {icon}
       </div>
       <h3 className="mt-4 font-semibold tracking-tight text-foreground">{title}</h3>

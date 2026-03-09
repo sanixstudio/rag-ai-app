@@ -30,9 +30,9 @@ export function DocumentUploadForm() {
   const formKey = state?.success ? state.documentId : "upload";
 
   return (
-    <form key={formKey} action={formAction} className="space-y-4">
+    <form key={formKey} action={formAction} className="space-y-5">
       <div
-        className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-8 transition-colors hover:bg-muted/50"
+        className="rounded-2xl border-2 border-dashed border-border/70 bg-muted/20 p-10 transition-all duration-200 hover:border-primary/30 hover:bg-muted/40 focus-within:border-primary/40 focus-within:bg-muted/40 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
         onClick={() => fileInputRef.current?.click()}
         onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
         role="button"
@@ -48,22 +48,27 @@ export function DocumentUploadForm() {
           required
           onChange={(e) => setSelectedFile(e.target.files?.[0]?.name ?? null)}
         />
-        <label className="flex flex-col items-center gap-2 cursor-pointer pointer-events-none">
+        <label className="flex flex-col items-center gap-3 cursor-pointer pointer-events-none">
           {selectedFile ? (
             <>
-              <FileText className="h-10 w-10 text-primary" />
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <FileText className="h-6 w-6" />
+              </span>
               <span className="text-sm font-medium text-foreground truncate max-w-xs">{selectedFile}</span>
+              <span className="text-xs text-muted-foreground">Ready to upload</span>
             </>
           ) : (
             <>
-              <Upload className="h-10 w-10 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Choose a PDF or TXT file</span>
-              <span className="text-xs text-muted-foreground">Max 10 MB</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <Upload className="h-6 w-6" />
+              </span>
+              <span className="text-sm font-medium text-foreground">Drop a file or click to browse</span>
+              <span className="text-xs text-muted-foreground">PDF or TXT · Max 10 MB</span>
             </>
           )}
         </label>
       </div>
-      <div>
+      <div className="space-y-2">
         <label htmlFor="tags" className="text-sm font-medium text-foreground">
           Tags (optional)
         </label>
@@ -72,11 +77,11 @@ export function DocumentUploadForm() {
           name="tags"
           type="text"
           placeholder="e.g. HR, Engineering (comma-separated)"
-          className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+          className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm transition-[color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring disabled:opacity-50"
           disabled={isPending}
         />
       </div>
-      <Button type="submit" disabled={isPending || !selectedFile}>
+      <Button type="submit" disabled={isPending || !selectedFile} size="lg" className="rounded-xl shadow-sm">
         {isPending ? "Uploading…" : "Upload to knowledge base"}
       </Button>
     </form>

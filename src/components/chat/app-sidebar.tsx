@@ -153,7 +153,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
       <SidebarFooter className="border-t border-sidebar-border/80 px-2 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="rounded-xl">
+            <SidebarMenuButton asChild isActive={pathname === "/documents"} className="rounded-xl">
               <Link href="/documents">
                 <BookOpen className="h-4 w-4" />
                 <span>Knowledge base</span>
@@ -161,7 +161,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="rounded-xl">
+            <SidebarMenuButton asChild isActive={pathname === "/analytics"} className="rounded-xl">
               <Link href="/analytics">
                 <BarChart3 className="h-4 w-4" />
                 <span>Analytics</span>

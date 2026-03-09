@@ -49,6 +49,11 @@
 
 :root {
   --radius: 0.75rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
   /* Warm, refined light theme */
   --background: oklch(0.985 0.003 90);
   --foreground: oklch(0.2 0.02 265);
@@ -82,8 +87,8 @@
   --sidebar-border: oklch(0.92 0.01 90);
   --sidebar-ring: oklch(0.32 0.08 265);
   --shadow-sm: 0 1px 2px oklch(0.2 0.02 265 / 0.04);
-  --shadow-md: 0 4px 12px oklch(0.2 0.02 265 / 0.06);
-  --shadow-lg: 0 12px 40px oklch(0.2 0.02 265 / 0.08);
+  --shadow-md: 0 4px 14px oklch(0.2 0.02 265 / 0.07);
+  --shadow-lg: 0 12px 40px oklch(0.2 0.02 265 / 0.1);
 }
 
 .dark {
@@ -130,5 +135,16 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+  }
+  /* Smooth transitions for interactive surfaces */
+  button:not(:disabled),
+  a[href],
+  [role="button"],
+  input:not(:disabled),
+  select:not(:disabled),
+  textarea:not(:disabled) {
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-out);
   }
 }

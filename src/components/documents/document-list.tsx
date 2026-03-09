@@ -87,27 +87,29 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
 
   if (documents.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center text-muted-foreground">
-        <FileText className="mx-auto h-10 w-10 opacity-50" />
-        <p className="mt-2 font-medium">No documents yet</p>
-        <p className="text-sm">Upload a PDF or TXT above to build your knowledge base.</p>
+      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-12 text-center">
+        <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+          <FileText className="h-7 w-7" />
+        </span>
+        <p className="mt-4 font-semibold text-foreground">No documents yet</p>
+        <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">Upload a PDF or TXT above to build your knowledge base and start asking questions.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <Input
           placeholder="Search by title..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs rounded-xl border-border/60"
+          className="max-w-xs rounded-xl border-border/60 transition-shadow"
         />
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
-          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
+          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring transition-shadow"
         >
           <option value="">All tags</option>
           {allTags.map((t) => (
@@ -119,7 +121,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as "date" | "title")}
-          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px]"
+          className="rounded-xl border border-input bg-background px-3 py-2 text-sm max-w-[180px] outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring transition-shadow"
         >
           <option value="date">Sort by date</option>
           <option value="title">Sort by title</option>
@@ -129,7 +131,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         {filteredAndSorted.map((doc) => (
           <li
             key={doc.id}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-border/80"
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />

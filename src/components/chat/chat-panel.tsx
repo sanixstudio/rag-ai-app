@@ -159,19 +159,19 @@ export function ChatPanel({
       <ScrollArea className="flex-1 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-6">
           {displayMessages.length === 0 && !pendingUserMessage && (
-            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-10 text-center">
-              <p className="font-semibold tracking-tight text-foreground">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-12 text-center">
+              <p className="text-lg font-semibold tracking-tight text-foreground">
                 Ask anything from your knowledge base
               </p>
-              <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 Your question will be answered using semantic search over your workspace documents.
               </p>
               {isKnowledgeBaseEmpty && (
-                <div className="mt-5 flex flex-col items-center gap-2">
+                <div className="mt-6 flex flex-col items-center gap-3">
                   <p className="text-sm text-muted-foreground">
                     No documents yet. Add PDF or TXT files so the assistant can answer from your content.
                   </p>
-                  <Button variant="outline" size="sm" asChild className="rounded-xl">
+                  <Button variant="outline" size="sm" asChild className="rounded-xl shadow-sm">
                     <Link href="/documents" className="inline-flex items-center gap-2">
                       <Upload className="h-4 w-4" aria-hidden />
                       Add documents
@@ -191,10 +191,10 @@ export function ChatPanel({
             >
               <div
                 className={cn(
-                  "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
+                  "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm transition-shadow",
                   m.role === "user"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted/80 border border-border/40"
+                    : "bg-card border border-border/50 shadow-sm"
                 )}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
@@ -280,15 +280,15 @@ export function ChatPanel({
           )}
           {showThinking && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-2xl bg-muted/80 border border-border/40 px-4 py-3 flex items-center gap-2 shadow-sm">
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-4 py-3 flex items-center gap-2.5 shadow-sm">
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">Thinking…</span>
               </div>
             </div>
           )}
           {streamingContent && (
             <div className="flex justify-start gap-3">
-              <div className="max-w-[85%] rounded-2xl bg-muted/80 border border-border/40 px-4 py-3 shadow-sm">
+              <div className="max-w-[85%] rounded-2xl bg-card border border-border/50 px-4 py-3 shadow-sm">
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{streamingContent}</p>
               </div>
             </div>
@@ -297,9 +297,9 @@ export function ChatPanel({
         </div>
       </ScrollArea>
 
-      <div className="border-t border-border/50 bg-background/95 backdrop-blur-sm p-4">
+      <div className="border-t border-border/50 bg-background/95 backdrop-blur-md p-4 transition-colors">
         {isKnowledgeBaseEmpty && (
-          <div className="mx-auto max-w-2xl mb-3 flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <div className="mx-auto max-w-2xl mb-3 flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
             <Upload className="h-4 w-4 shrink-0" aria-hidden />
             <span>Add a file to your knowledge base to get answers from your content.</span>
             <Button variant="link" size="sm" asChild className="h-auto p-0 text-primary font-medium shrink-0">
@@ -317,7 +317,7 @@ export function ChatPanel({
                 id="tag-filter"
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm"
+                className="rounded-xl border border-input bg-background px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring transition-shadow"
               >
                 <option value="">All documents</option>
                 {initialTags.map((t) => (
@@ -333,9 +333,9 @@ export function ChatPanel({
             <Textarea
               ref={textareaRef}
               name="content"
-              placeholder="Ask a question..."
+              placeholder="Ask a question from your knowledge base…"
               rows={1}
-              className="min-h-[46px] max-h-32 resize-none rounded-xl border-border/60 focus-visible:ring-2"
+              className="min-h-[46px] max-h-32 resize-none rounded-xl border-border/60 focus-visible:ring-2 focus-visible:ring-ring/50 transition-shadow"
               disabled={isStreaming}
               required
               onKeyDown={(e) => {

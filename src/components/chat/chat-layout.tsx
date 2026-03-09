@@ -19,9 +19,9 @@ export function ChatLayout({ initialSessions, organizationId, children }: ChatLa
     <SidebarProvider>
       <AppSidebar sessions={initialSessions} />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <SidebarTrigger />
+        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border/50 bg-background/95 backdrop-blur-md px-4 sm:px-6 transition-colors duration-200">
+          <div className="flex min-w-0 items-center gap-3">
+            <SidebarTrigger className="rounded-xl hover:bg-sidebar-accent" />
             <OrganizationSwitcher
               hidePersonal
               afterCreateOrganizationUrl="/chat"
