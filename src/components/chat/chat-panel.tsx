@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, ThumbsUp, ThumbsDown, FileText, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Send, ThumbsUp, ThumbsDown, FileText, ChevronRight, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { submitMessageFeedback } from "@/actions/chat";
 
@@ -30,12 +31,15 @@ interface ChatPanelProps {
   initialMessages?: ChatMessage[];
   /** Tags for "Filter by source" dropdown */
   initialTags?: string[];
+  /** When true, show a prompt to add documents (PDF/TXT) in the empty state */
+  isKnowledgeBaseEmpty?: boolean;
 }
 
 export function ChatPanel({
   initialSessionId,
   initialMessages = [],
   initialTags = [],
+  isKnowledgeBaseEmpty = false,
 }: ChatPanelProps) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -156,10 +160,25 @@ export function ChatPanel({
         <div className="mx-auto max-w-2xl space-y-6">
           {displayMessages.length === 0 && !pendingUserMessage && (
             <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-10 text-center">
-              <p className="font-semibold tracking-tight text-foreground">Ask anything from your knowledge base</p>
-              <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-                Your question will be answered using semantic search over internal docs.
+              <p className="font-semibold tracking-tight text-foreground">
+                Ask anything from your knowledge base
               </p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+                Your question will be answered using semantic search over your workspace documents.
+              </p>
+              {isKnowledgeBaseEmpty && (
+                <div className="mt-5 flex flex-col items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    No documents yet. Add PDF or TXT files so the assistant can answer from your content.
+                  </p>
+                  <Button variant="outline" size="sm" asChild className="rounded-xl">
+                    <Link href="/documents" className="inline-flex items-center gap-2">
+                      <Upload className="h-4 w-4" aria-hidden />
+                      Add documents
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           {displayMessages.map((m) => (

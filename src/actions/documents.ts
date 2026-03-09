@@ -146,6 +146,17 @@ export type DocumentListItem = {
 };
 
 /**
+ * Returns the number of documents in the current workspace. Use for empty-state UI (e.g. prompt to upload).
+ */
+export async function getDocumentCount(): Promise<number> {
+  const { userId } = await auth();
+  if (!userId) return 0;
+  const { organizationId } = await requireOrganizationId();
+  if (!organizationId) return 0;
+  return prisma.document.count({ where: { organizationId } });
+}
+
+/**
  * Get distinct tags from all documents in the current workspace (for filter dropdowns).
  */
 export async function getDocumentTags(): Promise<string[]> {
