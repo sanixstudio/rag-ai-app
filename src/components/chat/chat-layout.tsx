@@ -6,6 +6,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AppSidebar, type ChatSessionItem } from "./app-sidebar";
 
 interface ChatLayoutProps {
@@ -33,11 +34,14 @@ export function ChatLayout({ initialSessions, organizationId, children }: ChatLa
               }}
             />
           </div>
-          <UserButton
-            appearance={{
-              elements: { avatarBox: "h-8 w-8 rounded-xl" },
-            }}
-          />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <UserButton
+              appearance={{
+                elements: { avatarBox: "h-8 w-8 rounded-xl" },
+              }}
+            />
+          </div>
         </header>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}

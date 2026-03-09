@@ -106,28 +106,29 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
             <SidebarMenu>
               {sessions.length === 0 ? (
                 <SidebarMenuItem>
-                  <span className="px-2 py-1.5 text-sm text-muted-foreground">
+                  <span className="px-2 py-1.5 text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
                     No chats yet
                   </span>
                 </SidebarMenuItem>
               ) : (
                 sessions.map((session) => (
                   <SidebarMenuItem key={session.id}>
-                    <div className="flex w-full items-center gap-0.5">
+                    <div className="flex w-full items-center gap-0.5 group-data-[collapsible=icon]:w-auto">
                       <SidebarMenuButton
                         asChild
                         isActive={pathname === `/chat/${session.id}`}
-                        className="flex-1 min-w-0 rounded-xl"
+                        tooltip={session.title}
+                        className="flex-1 min-w-0 rounded-xl group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:min-w-0"
                       >
                         <Link href={`/chat/${session.id}`}>
                           <MessageSquare className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{session.title}</span>
+                          <span className="truncate group-data-[collapsible=icon]:hidden">{session.title}</span>
                         </Link>
                       </SidebarMenuButton>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground group-data-[collapsible=icon]:hidden"
                         onClick={(e) => handleRename(e, session)}
                         aria-label={`Rename ${session.title}`}
                       >
@@ -136,7 +137,7 @@ export function AppSidebar({ sessions }: AppSidebarProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive group-data-[collapsible=icon]:hidden"
                         onClick={(e) => openDeleteConfirm(e, session)}
                         aria-label={`Delete ${session.title}`}
                       >

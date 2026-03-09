@@ -44,6 +44,10 @@ export function ChatPanel({
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  /** Message count when current stream started; we keep showing stream until server sends N+2 messages. */
+  const startMessageCountRef = useRef(0);
+  /** True when stream finished successfully; we avoid clearing UI in finally until refresh lands. */
+  const streamCompletedRef = useRef(false);
 
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState("");
@@ -62,6 +66,17 @@ export function ChatPanel({
     scrollToBottom();
   }, [initialMessages?.length, pendingUserMessage, streamingContent, scrollToBottom]);
 
+  /** Once refresh delivers the new messages, clear local stream state to avoid duplicate display. */
+  useEffect(() => {
+    if (!streamCompletedRef.current) return;
+    const expectedMin = startMessageCountRef.current + 2; // user + assistant
+    if ((initialMessages?.length ?? 0) >= expectedMin) {
+      setPendingUserMessage(null);
+      setStreamingContent("");
+      streamCompletedRef.current = false;
+    }
+  }, [initialMessages?.length]);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -73,6 +88,8 @@ export function ChatPanel({
         return;
       }
 
+      startMessageCountRef.current = initialMessages?.length ?? 0;
+      streamCompletedRef.current = false;
       setPendingUserMessage(content);
       setStreamingContent("");
       setIsStreaming(true);
@@ -121,6 +138,7 @@ export function ChatPanel({
           setStreamingContent(accumulated);
         }
 
+        streamCompletedRef.current = true;
         if (newSessionId && !initialSessionId) {
           router.replace(`/chat/${newSessionId}`);
         }
@@ -131,12 +149,14 @@ export function ChatPanel({
         setSubmitError(message);
         toast.error(message);
       } finally {
-        setPendingUserMessage(null);
-        setStreamingContent("");
         setIsStreaming(false);
+        if (!streamCompletedRef.current) {
+          setPendingUserMessage(null);
+          setStreamingContent("");
+        }
       }
     },
-    [sessionId, initialSessionId, router, tagFilter]
+    [sessionId, initialSessionId, router, tagFilter, initialMessages?.length]
   );
 
   async function handleFeedback(messageId: string, value: 1 | -1) {
